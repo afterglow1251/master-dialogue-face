@@ -1,0 +1,266 @@
+import { Elysia } from "elysia";
+
+import { config } from "../config.ts";
+import * as dialogueService from "../services/dialogue.service.ts";
+import * as emotionalState from "../services/emotional-state.service.ts";
+import { verifyToken } from "../services/auth.ts";
+import { resolveUserIdFromClerkId } from "./auth-middleware.ts";
+import {
+  createEmptyBlendshapeVector,
+  toDialogueId,
+  toUserId,
+} from "../types/index.ts";
+import type {
+  WsClientMessage,
+  WsServerMessage,
+} from "@shared/types/websocket.ts";
+
+// ── Type guard ──
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isWsClientMessage(data: unknown): data is WsClientMessage {
+  if (!isRecord(data)) return false;
+  if (!("type" in data)) return false;
+
+  switch (data["type"]) {
+    case "analyze":
+      return (
+        typeof data["dialogueId"] === "string" &&
+        typeof data["text"] === "string"
+      );
+    case "settings_update":
+      return isRecord(data["settings"]);
+    case "mood_reset":
+      return typeof data["dialogueId"] === "string";
+    case "ping":
+      return true;
+    default:
+      return false;
+  }
+}
+
+// ── Per-connection session state ──
+
+interface SessionState {
+  userId: string;
+  contextWindowSize: number;
+  expressionIntensity: number;
+  moodReactivity: number;
+  moodDecaySeconds: number;
+  emotionWeight: number;
+}
+
+const sessions = new Map<string, SessionState>();
+
+function getSession(wsId: string, userId: string): SessionState {
+  let session = sessions.get(wsId);
+  if (!session) {
+    session = {
+      userId,
+      contextWindowSize: config.ws.defaultContextWindowSize,
+      expressionIntensity: config.ws.defaultExpressionIntensity,
+      moodReactivity: config.mood.defaultReactivity,
+      moodDecaySeconds: config.mood.defaultDecaySeconds,
+      emotionWeight: config.mood.defaultEmotionWeight,
+    };
+    sessions.set(wsId, session);
+  }
+  return session;
+}
+
+// ── WebSocket routes ──
+
+export const wsRoutes = new Elysia()
+  .derive(async ({ request }) => {
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token");
+
+    if (!token) {
+      return { wsUserId: null };
+    }
+
+    const clerkUserId = await verifyToken(token);
+    if (!clerkUserId) {
+      return { wsUserId: null };
+    }
+
+    try {
+      const userId = await resolveUserIdFromClerkId(clerkUserId);
+      return { wsUserId: userId };
+    } catch {
+      return { wsUserId: null };
+    }
+  })
+  .ws("/ws", {
+    beforeHandle({ wsUserId, set }) {
+      if (!wsUserId) {
+        set.status = 401;
+        return "Unauthorized";
+      }
+      return undefined;
+    },
+
+    open(_ws) {
+      // Session created lazily in getSession
+    },
+
+    close(ws) {
+      sessions.delete(ws.id);
+    },
+
+    async message(ws, rawMessage) {
+      const { wsUserId } = ws.data;
+      if (!wsUserId) {
+        // Guarded by beforeHandle, but narrows type for TypeScript
+        return;
+      }
+
+      let parsed: unknown;
+      if (typeof rawMessage === "string") {
+        try {
+          parsed = JSON.parse(rawMessage);
+        } catch {
+          const error: WsServerMessage = {
+            type: "error",
+            message: "Invalid JSON",
+            code: "INVALID_FORMAT",
+          };
+          ws.send(JSON.stringify(error));
+          return;
+        }
+      } else {
+        parsed = rawMessage;
+      }
+
+      if (!isWsClientMessage(parsed)) {
+        const error: WsServerMessage = {
+          type: "error",
+          message: "Invalid message format",
+          code: "INVALID_FORMAT",
+        };
+        ws.send(JSON.stringify(error));
+        return;
+      }
+
+      switch (parsed.type) {
+        case "ping": {
+          const pong: WsServerMessage = { type: "pong" };
+          ws.send(JSON.stringify(pong));
+          break;
+        }
+
+        case "settings_update": {
+          const session = getSession(ws.id, wsUserId);
+          if (parsed.settings.contextWindowSize !== undefined) {
+            session.contextWindowSize = Math.min(
+              Math.max(1, Math.floor(parsed.settings.contextWindowSize)),
+              config.ws.maxContextWindowSize,
+            );
+          }
+          if (parsed.settings.expressionIntensity !== undefined) {
+            session.expressionIntensity = Math.min(
+              Math.max(0.0, parsed.settings.expressionIntensity),
+              config.ws.maxExpressionIntensity,
+            );
+          }
+          if (parsed.settings.moodReactivity !== undefined) {
+            session.moodReactivity = Math.min(
+              Math.max(0.01, parsed.settings.moodReactivity),
+              1.0,
+            );
+          }
+          if (parsed.settings.moodDecaySeconds !== undefined) {
+            session.moodDecaySeconds = Math.min(
+              Math.max(10, parsed.settings.moodDecaySeconds),
+              config.mood.maxDecaySeconds,
+            );
+          }
+          if (parsed.settings.emotionWeight !== undefined) {
+            session.emotionWeight = Math.min(
+              Math.max(0.0, parsed.settings.emotionWeight),
+              1.0,
+            );
+          }
+          break;
+        }
+
+        case "mood_reset": {
+          try {
+            const session = getSession(ws.id, wsUserId);
+            const dialogueId = toDialogueId(parsed.dialogueId);
+            await dialogueService.verifyDialogueOwnership(
+              dialogueId,
+              toUserId(session.userId),
+            );
+            const mood = await emotionalState.resetMoodState(dialogueId);
+
+            const result: WsServerMessage = {
+              type: "mood_state",
+              dialogueId: parsed.dialogueId,
+              mood,
+              blendshapes: createEmptyBlendshapeVector(),
+            };
+            ws.send(JSON.stringify(result));
+          } catch (err) {
+            const error: WsServerMessage = {
+              type: "error",
+              message: err instanceof Error ? err.message : "Unknown error",
+              code: "MOOD_RESET_FAILED",
+            };
+            ws.send(JSON.stringify(error));
+          }
+          break;
+        }
+
+        case "analyze": {
+          try {
+            const session = getSession(ws.id, wsUserId);
+            const dialogueId = toDialogueId(parsed.dialogueId);
+            await dialogueService.verifyDialogueOwnership(
+              dialogueId,
+              toUserId(session.userId),
+            );
+
+            const { turn, analysis, blendshapes, mood, combinedEmotions } =
+              await dialogueService.analyzeAndSaveTurn({
+                dialogueId,
+                text: parsed.text,
+                contextWindowSize: session.contextWindowSize,
+                expressionIntensity: session.expressionIntensity,
+                moodReactivity: session.moodReactivity,
+                moodDecaySeconds: session.moodDecaySeconds,
+                emotionWeight: session.emotionWeight,
+              });
+
+            const result: WsServerMessage = {
+              type: "blendshape_update",
+              turnId: turn.id,
+              text: parsed.text,
+              emotions: {
+                categories: analysis.emotions.categories,
+                vad: analysis.emotions.vad,
+                topEmotions: analysis.emotions.top_emotions,
+              },
+              mood,
+              combinedEmotions,
+              blendshapes,
+              processingTimeMs: analysis.processing_time_ms,
+            };
+
+            ws.send(JSON.stringify(result));
+          } catch (err) {
+            const error: WsServerMessage = {
+              type: "error",
+              message: err instanceof Error ? err.message : "Unknown error",
+              code: "ANALYZE_FAILED",
+            };
+            ws.send(JSON.stringify(error));
+          }
+          break;
+        }
+      }
+    },
+  });

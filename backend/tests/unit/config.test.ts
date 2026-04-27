@@ -1,0 +1,38 @@
+import { describe, expect, test } from "bun:test";
+
+import { config } from "../../src/config.ts";
+
+describe("config", () => {
+  test("port is a number", () => {
+    expect(typeof config.port).toBe("number");
+    expect(config.port).toBeGreaterThan(0);
+  });
+
+  test("databaseUrl is a non-empty string", () => {
+    expect(typeof config.databaseUrl).toBe("string");
+    expect(config.databaseUrl.length).toBeGreaterThan(0);
+  });
+
+  test("nlpServiceUrl is a valid URL", () => {
+    expect(config.nlpServiceUrl).toMatch(/^https?:\/\//);
+  });
+
+  test("nlp timeouts are positive numbers", () => {
+    expect(config.nlp.analyzeTimeoutMs).toBeGreaterThan(0);
+    expect(config.nlp.healthTimeoutMs).toBeGreaterThan(0);
+  });
+
+  test("ws defaults are valid", () => {
+    expect(config.ws.defaultContextWindowSize).toBeGreaterThanOrEqual(1);
+    expect(config.ws.defaultExpressionIntensity).toBeGreaterThanOrEqual(0);
+    expect(config.ws.maxContextWindowSize).toBeGreaterThanOrEqual(
+      config.ws.defaultContextWindowSize,
+    );
+    expect(config.ws.maxExpressionIntensity).toBeGreaterThan(0);
+  });
+
+  test("clerk keys are non-empty strings", () => {
+    expect(config.clerk.secretKey.length).toBeGreaterThan(0);
+    expect(config.clerk.publishableKey.length).toBeGreaterThan(0);
+  });
+});

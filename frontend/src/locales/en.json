@@ -1,0 +1,117 @@
+{
+  "workspace": {
+    "title": "Workspace",
+    "description": "Chats, insights, and session controls"
+  },
+  "sidebar": {
+    "newChat": "New chat",
+    "history": "History",
+    "radar": "Radar",
+    "tuning": "Tuning",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "account": "Account",
+    "accountDescription": "Manage profile and sign out"
+  },
+  "chat": {
+    "untitled": "Untitled chat",
+    "empty": "No chats yet",
+    "rename": "Rename chat",
+    "delete": "Delete chat"
+  },
+  "input": {
+    "placeholder": "Type a line to analyze..."
+  },
+  "history": {
+    "title": "Dialogue History",
+    "description": "Click the chart icon on any message for details",
+    "empty": "Start typing to begin a dialogue",
+    "viewReport": "View emotion report"
+  },
+  "emotionRadar": {
+    "title": "Emotion Radar",
+    "description": "Acute emotion vs accumulated mood distribution",
+    "acuteEmotion": "Acute Emotion",
+    "mood": "Mood",
+    "noData": "No data yet. Enter text to see emotion distribution."
+  },
+  "emotionReport": {
+    "title": "Emotion Report — Turn {turn}",
+    "detectedEmotions": "Detected Emotions",
+    "moodState": "Mood State",
+    "changeFromPrevious": "Change from Previous Turn",
+    "detectedChange": "Detected Change",
+    "turn": "Turn {n}"
+  },
+  "emotionPanel": {
+    "mood": "Mood:"
+  },
+  "tuning": {
+    "title": "Settings",
+    "description": "Adjust animation, analysis, and mood parameters",
+    "animation": "Animation",
+    "smoothing": "Smoothing",
+    "contextWindow": "Context window",
+    "intensity": "Intensity",
+    "moodModel": "Mood Model",
+    "reactivity": "Reactivity",
+    "reactivityHelp": "How strongly new emotions affect mood",
+    "decayTime": "Decay time",
+    "decayTimeHelp": "Time for mood to return to neutral",
+    "emotionWeight": "Emotion weight",
+    "emotionWeightHelp": "1.0 = only acute emotion, 0.0 = only mood",
+    "resetDefaults": "Reset defaults",
+    "resetMood": "Reset mood"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Emotional Dialogue Studio",
+      "subtitle": "Log in to continue your dialogue sessions.",
+      "description": "Pick up where you left off, revisit previous conversations, and keep your session history in one place.",
+      "footer": "Built for ongoing dialogue work with persistent history and a cleaner way to resume each session.",
+      "newHere": "New here?",
+      "createAccount": "Create an account"
+    },
+    "signUp": {
+      "title": "Secure Access",
+      "subtitle": "Create an account and keep each conversation scoped to you.",
+      "description": "Create your workspace to save conversations, return to them later, and keep your dialogue flow consistent across sessions.",
+      "footer": "A lightweight sign-up flow with private access to your saved sessions from the start.",
+      "hasAccount": "Already have an account?",
+      "logIn": "Log in"
+    }
+  },
+  "emotions": {
+    "admiration": "Admiration",
+    "amusement": "Amusement",
+    "anger": "Anger",
+    "annoyance": "Annoyance",
+    "approval": "Approval",
+    "caring": "Caring",
+    "confusion": "Confusion",
+    "curiosity": "Curiosity",
+    "desire": "Desire",
+    "disappointment": "Disappointment",
+    "disapproval": "Disapproval",
+    "disgust": "Disgust",
+    "embarrassment": "Embarrassment",
+    "excitement": "Excitement",
+    "fear": "Fear",
+    "gratitude": "Gratitude",
+    "grief": "Grief",
+    "joy": "Joy",
+    "love": "Love",
+    "nervousness": "Nervousness",
+    "optimism": "Optimism",
+    "pride": "Pride",
+    "realization": "Realization",
+    "relief": "Relief",
+    "remorse": "Remorse",
+    "sadness": "Sadness",
+    "surprise": "Surprise"
+  },
+  "common": {
+    "close": "Close",
+    "back": "Workspace"
+  }
+}

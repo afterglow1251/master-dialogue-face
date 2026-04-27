@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+docker-compose.override.yml
+
+# Drizzle
+drizzle/meta/
+
+# Bun
+bun.lockb
+
+# HuggingFace model cache
+models_cache/
+
+# Three.js models (large binary files)
+# frontend/public/models/*.glb
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+
+# Temporary
+*.tmp
+*.bak
+
+# Legacy
+maga-code/
+
+CLAUDE.md
+.claude
+.omc

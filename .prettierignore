@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+drizzle/migrations
+*.glb
+*.pyc
+__pycache__
+.venv
+bun.lockb
