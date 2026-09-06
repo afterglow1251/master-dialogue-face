@@ -19,8 +19,12 @@ export const users = pgTable("users", {
   clerkId: varchar("clerk_id", { length: 255 }).notNull().unique(),
   email: varchar("email", { length: 320 }),
   displayName: varchar("display_name", { length: 200 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const emotionTemplates = pgTable("emotion_templates", {
@@ -30,8 +34,12 @@ export const emotionTemplates = pgTable("emotion_templates", {
     .$type<BlendshapeVector>()
     .notNull(),
   description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const characters = pgTable("characters", {
@@ -41,8 +49,12 @@ export const characters = pgTable("characters", {
   description: text("description"),
   expressionMultiplier: real("expression_multiplier").default(1.0).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const dialogues = pgTable(
@@ -56,8 +68,12 @@ export const dialogues = pgTable(
       .references(() => characters.id)
       .notNull(),
     title: varchar("title", { length: 200 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [index("dialogues_user_id_idx").on(table.userId)],
 );
@@ -81,7 +97,9 @@ export const dialogueTurns = pgTable(
     combinedProbabilities: jsonb(
       "combined_probabilities",
     ).$type<EmotionProbabilities>(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [index("dialogue_turns_dialogue_id_idx").on(table.dialogueId)],
 );
@@ -96,5 +114,7 @@ export const dialogueMoodStates = pgTable("dialogue_mood_states", {
   moodArousal: real("mood_arousal").default(0.3).notNull(),
   moodDominance: real("mood_dominance").default(0.5).notNull(),
   turnCount: integer("turn_count").default(0).notNull(),
-  lastUpdatedAt: timestamp("last_updated_at").defaultNow().notNull(),
+  lastUpdatedAt: timestamp("last_updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
