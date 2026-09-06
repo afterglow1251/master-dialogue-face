@@ -24,9 +24,19 @@ const app = new Elysia()
       },
     }),
   )
-  .onError(({ error, set }) => {
+  .onError(({ code, error, set }) => {
     if (error instanceof HttpError) {
       set.status = error.statusCode;
+      return { error: error.message };
+    }
+
+    if (code === "NOT_FOUND") {
+      set.status = 404;
+      return { error: "Not found" };
+    }
+
+    if (code === "VALIDATION") {
+      set.status = 422;
       return { error: error.message };
     }
 

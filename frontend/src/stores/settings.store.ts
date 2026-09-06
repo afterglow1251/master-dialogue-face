@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { useLocalStorage } from "@vueuse/core";
 import { watchEffect, watch } from "vue";
 
-import { i18n } from "@/lib/i18n";
+import { i18n, type Locale } from "@/lib/i18n";
 import {
   DEFAULT_CONTEXT_WINDOW_SIZE,
   DEFAULT_EXPRESSION_INTENSITY,
@@ -39,7 +39,7 @@ export const useSettingsStore = defineStore("settings", () => {
   );
 
   const isDark = useLocalStorage("settings:isDark", false);
-  const locale = useLocalStorage("settings:locale", "uk");
+  const locale = useLocalStorage<Locale>("settings:locale", "uk");
 
   watchEffect(() => {
     document.documentElement.classList.toggle("dark", isDark.value);

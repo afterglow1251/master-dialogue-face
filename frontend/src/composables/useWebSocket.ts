@@ -40,9 +40,11 @@ export function useAppWebSocket() {
       retries: 10,
       delay: 2000,
       onFailed() {
-        // Refresh token on reconnect failure in case it expired
         refreshToken();
       },
+    },
+    onDisconnected() {
+      refreshToken();
     },
     heartbeat: {
       message: JSON.stringify({ type: "ping" }),
@@ -50,10 +52,6 @@ export function useAppWebSocket() {
       pongTimeout: 5_000,
     },
   });
-
-  // Refresh token periodically (Clerk tokens are short-lived)
-  const TOKEN_REFRESH_INTERVAL_MS = 50_000;
-  const refreshInterval = setInterval(refreshToken, TOKEN_REFRESH_INTERVAL_MS);
 
   watch(data, (raw) => {
     if (!raw) return;
@@ -186,8 +184,5 @@ export function useAppWebSocket() {
     resetMood,
     open,
     close,
-    cleanup() {
-      clearInterval(refreshInterval);
-    },
   };
 }

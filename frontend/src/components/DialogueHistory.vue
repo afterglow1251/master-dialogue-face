@@ -46,7 +46,7 @@ watch(
   async () => {
     await nextTick();
     const el = scrollRef.value?.$el?.querySelector(
-      "[data-radix-scroll-area-viewport]",
+      "[data-reka-scroll-area-viewport]",
     );
     if (el) el.scrollTop = el.scrollHeight;
   },

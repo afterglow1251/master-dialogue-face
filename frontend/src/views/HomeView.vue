@@ -288,7 +288,7 @@ async function handleSelectChat(dialogueId: string) {
                   </p>
                 </div>
 
-                <UserButton after-sign-out-url="/sign-in">
+                <UserButton>
                   <UserButton.UserProfilePage
                     :label="t('preferences.title')"
                     url="preferences"

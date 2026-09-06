@@ -413,7 +413,7 @@ async function seed(): Promise<void> {
       modelUrl: "/models/avatar-WCpLm2TimIAYnTVYq3uS.glb",
       description: "Default Ready Player Me avatar with ARKit blendshapes",
     })
-    .onConflictDoNothing();
+    .onConflictDoNothing({ target: characters.name });
 
   console.log("Seed complete.");
   process.exit(0);

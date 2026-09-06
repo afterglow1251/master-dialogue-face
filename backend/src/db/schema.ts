@@ -44,7 +44,7 @@ export const emotionTemplates = pgTable("emotion_templates", {
 
 export const characters = pgTable("characters", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
   modelUrl: varchar("model_url", { length: 500 }).notNull(),
   description: text("description"),
   expressionMultiplier: real("expression_multiplier").default(1.0).notNull(),

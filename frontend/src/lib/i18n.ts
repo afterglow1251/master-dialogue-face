@@ -4,10 +4,6 @@ import en from "@/locales/en.json";
 
 const savedLocale = localStorage.getItem("settings:locale");
 
-/**
- * Ukrainian plural rule (three forms: "1 день", "2-4 дні", "5+ днів").
- * Message format: "one | few | many".
- */
 function ukPluralRule(choice: number, choicesLength: number): number {
   const ONE = 0;
   const FEW = 1;
@@ -26,9 +22,15 @@ function ukPluralRule(choice: number, choicesLength: number): number {
   return MANY;
 }
 
+export type Locale = "uk" | "en";
+
+function isLocale(value: string | null): value is Locale {
+  return value === "uk" || value === "en";
+}
+
 export const i18n = createI18n({
   legacy: false,
-  locale: savedLocale ?? "uk",
+  locale: isLocale(savedLocale) ? savedLocale : "uk",
   fallbackLocale: "en",
   messages: { uk, en },
   pluralRules: { uk: ukPluralRule },

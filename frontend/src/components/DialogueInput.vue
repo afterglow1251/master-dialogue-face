@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick } from "vue";
+import { nextTick, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useTextareaAutosize } from "@vueuse/core";
 import { ArrowUp } from "lucide-vue-next";
@@ -15,7 +15,10 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const { textarea, input: text, triggerResize } = useTextareaAutosize();
+const textarea = useTemplateRef<HTMLTextAreaElement>("textarea");
+const { input: text, triggerResize } = useTextareaAutosize({
+  element: textarea,
+});
 
 async function handleSubmit() {
   const trimmed = text.value.trim();

@@ -57,10 +57,8 @@ export type ArkitBlendshapeName = (typeof ARKIT_BLENDSHAPES)[number];
 
 export type BlendshapeVector = Record<ArkitBlendshapeName, number>;
 
-export const NEUTRAL_BLENDSHAPES: BlendshapeVector = Object.freeze(
-  Object.fromEntries(ARKIT_BLENDSHAPES.map((name) => [name, 0])),
-) as BlendshapeVector;
-
 export function createEmptyBlendshapeVector(): BlendshapeVector {
-  return { ...NEUTRAL_BLENDSHAPES };
+  return Object.fromEntries(
+    ARKIT_BLENDSHAPES.map((name) => [name, 0]),
+  ) as BlendshapeVector;
 }
