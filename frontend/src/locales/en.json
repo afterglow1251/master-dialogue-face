@@ -17,7 +17,15 @@
     "untitled": "Untitled chat",
     "empty": "No chats yet",
     "rename": "Rename chat",
-    "delete": "Delete chat"
+    "delete": "Delete chat",
+    "yesterday": "Yesterday",
+    "daysAgo": "{n} day ago | {n} days ago"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "language": "Language",
+    "languageName": "English",
+    "colorScheme": "Color scheme"
   },
   "input": {
     "placeholder": "Type a line to analyze..."

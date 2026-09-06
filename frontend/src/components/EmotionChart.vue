@@ -63,9 +63,7 @@ const chartData = computed(() => {
   }
 
   return {
-    labels: EMOTION_LABELS.map(
-      (label) => label.charAt(0).toUpperCase() + label.slice(1),
-    ),
+    labels: EMOTION_LABELS.map((label) => t("emotions." + label)),
     datasets,
   };
 });
@@ -90,7 +88,7 @@ const chartOptions: ChartOptions<"radar"> = {
     tooltip: {
       callbacks: {
         label: (context: TooltipItem<"radar">) =>
-          `${context.dataset.label ?? "Value"}: ${(context.parsed.r * 100).toFixed(1)}%`,
+          `${context.dataset.label ?? ""}: ${(context.parsed.r * 100).toFixed(1)}%`,
       },
     },
     legend: {

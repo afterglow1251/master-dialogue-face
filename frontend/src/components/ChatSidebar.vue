@@ -20,23 +20,34 @@ const emit = defineEmits<{
   deleteChat: [dialogueId: string];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const dialogueStore = useDialogueStore();
 const emotionStore = useEmotionStore();
 const { dialogueList, currentDialogueId } = storeToRefs(dialogueStore);
 
+const MS_PER_DAY = 86_400_000;
+const RELATIVE_DAYS_LIMIT = 7;
+
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / 86_400_000);
+  // Server clock may be slightly ahead of the client, which would make the
+  // difference negative for a just-created chat. Treat that as "now".
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
+  const diffDays = Math.floor(diffMs / MS_PER_DAY);
 
   if (diffDays === 0) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(locale.value, {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  if (diffDays === 1) return t("chat.yesterday");
+  if (diffDays < RELATIVE_DAYS_LIMIT) return t("chat.daysAgo", diffDays);
+  return date.toLocaleDateString(locale.value, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function handleSelect(dialogueId: string) {

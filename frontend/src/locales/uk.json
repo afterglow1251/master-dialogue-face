@@ -17,7 +17,15 @@
     "untitled": "Без назви",
     "empty": "Чатів ще немає",
     "rename": "Перейменувати",
-    "delete": "Видалити"
+    "delete": "Видалити",
+    "yesterday": "Вчора",
+    "daysAgo": "{n} день тому | {n} дні тому | {n} днів тому"
+  },
+  "preferences": {
+    "title": "Налаштування",
+    "language": "Мова",
+    "languageName": "Українська",
+    "colorScheme": "Кольорова схема"
   },
   "input": {
     "placeholder": "Введіть текст для аналізу..."

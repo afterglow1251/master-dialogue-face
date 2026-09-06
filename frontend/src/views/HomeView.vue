@@ -290,7 +290,7 @@ async function handleSelectChat(dialogueId: string) {
 
                 <UserButton after-sign-out-url="/sign-in">
                   <UserButton.UserProfilePage
-                    label="Preferences"
+                    :label="t('preferences.title')"
                     url="preferences"
                   >
                     <template #labelIcon>
@@ -312,7 +312,7 @@ async function handleSelectChat(dialogueId: string) {
                     </template>
                     <div class="space-y-4 px-6 pb-6">
                       <h1 class="text-[0.9375rem] font-semibold">
-                        Preferences
+                        {{ t("preferences.title") }}
                       </h1>
 
                       <div
@@ -320,10 +320,10 @@ async function handleSelectChat(dialogueId: string) {
                       >
                         <div>
                           <p class="text-[0.8125rem] font-medium">
-                            {{ locale === "uk" ? "Мова" : "Language" }}
+                            {{ t("preferences.language") }}
                           </p>
                           <p class="text-xs text-gray-500">
-                            {{ locale === "uk" ? "Українська" : "English" }}
+                            {{ t("preferences.languageName") }}
                           </p>
                         </div>
                         <button
@@ -344,11 +344,7 @@ async function handleSelectChat(dialogueId: string) {
                             }}
                           </p>
                           <p class="text-xs text-gray-500">
-                            {{
-                              locale === "uk"
-                                ? "Кольорова схема"
-                                : "Color scheme"
-                            }}
+                            {{ t("preferences.colorScheme") }}
                           </p>
                         </div>
                         <button
