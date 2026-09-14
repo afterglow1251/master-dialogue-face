@@ -30,7 +30,7 @@ demo = gr.Interface(
     description="REST API lives at /api/v1. This form is a quick manual check.",
 )
 
-demo.launch(server_name=SPACE_HOST, server_port=SPACE_PORT, prevent_thread_lock=True)
+demo.launch(server_name=SPACE_HOST, server_port=SPACE_PORT, ssr_mode=False, prevent_thread_lock=True)
 server_routes = demo.server_app.router.routes
 gradio_route_count = len(server_routes)
 demo.server_app.include_router(router)
