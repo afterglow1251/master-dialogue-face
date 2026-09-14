@@ -1,3 +1,4 @@
+import spaces
 import gradio as gr
 import uvicorn
 
@@ -5,6 +6,11 @@ from app.main import app as fastapi_app
 from app.services.emotion_analyzer import emotion_analyzer
 
 SPACE_PORT = 7860
+
+
+@spaces.GPU
+def zero_gpu_placeholder() -> None:
+    return None
 
 
 def analyze_demo(text: str) -> dict[str, float]:
