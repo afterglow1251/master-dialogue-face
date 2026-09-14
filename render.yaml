@@ -1,18 +1,5 @@
 services:
   - type: web
-    name: nlp-service
-    runtime: docker
-    rootDir: nlp-service
-    dockerfilePath: ./Dockerfile
-    plan: free
-    healthCheckPath: /api/v1/health
-    envVars:
-      - key: MODEL_NAME
-        value: SamLowe/roberta-base-go_emotions
-      - key: DEVICE
-        value: cpu
-
-  - type: web
     name: backend
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
@@ -27,10 +14,7 @@ services:
       - key: CLERK_PUBLISHABLE_KEY
         sync: false
       - key: NLP_SERVICE_URL
-        fromService:
-          type: web
-          name: nlp-service
-          envVarKey: RENDER_INTERNAL_HOSTNAME
+        sync: false
       - key: NLP_ANALYZE_TIMEOUT_MS
         value: "30000"
       - key: NLP_HEALTH_TIMEOUT_MS

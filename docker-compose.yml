@@ -32,7 +32,7 @@ services:
     ports:
       - "${NLP_PORT:-8000}:8000"
     volumes:
-      - model_cache:/root/.cache/huggingface
+      - model_cache:/home/user/.cache/huggingface
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 10s
