@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: nlp-service
+    runtime: docker
+    rootDir: nlp-service
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: MODEL_NAME
+        value: SamLowe/roberta-base-go_emotions
+      - key: DEVICE
+        value: cpu
+
+  - type: web
+    name: backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: NLP_SERVICE_URL
+        fromService:
+          type: web
+          name: nlp-service
+          envVarKey: RENDER_INTERNAL_HOSTNAME
+      - key: NLP_ANALYZE_TIMEOUT_MS
+        value: "30000"
+      - key: NLP_HEALTH_TIMEOUT_MS
+        value: "5000"
+
+  - type: web
+    name: frontend
+    runtime: static
+    buildCommand: cd frontend && bun install --frozen-lockfile && bun run build-only
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_WS_URL
+        sync: false
