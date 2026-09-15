@@ -1,12 +1,17 @@
 import { Elysia } from "elysia";
 
 import { config } from "../config.ts";
+import {
+  describeConversationError,
+  runConversationTurn,
+} from "../services/conversation.service.ts";
 import * as dialogueService from "../services/dialogue.service.ts";
 import * as emotionalState from "../services/emotional-state.service.ts";
 import { verifyToken } from "../services/auth.ts";
 import { resolveUserIdFromClerkId } from "./auth-middleware.ts";
 import {
   createEmptyBlendshapeVector,
+  isSpeechLanguage,
   toDialogueId,
   toUserId,
 } from "../types/index.ts";
@@ -26,11 +31,15 @@ function isWsClientMessage(data: unknown): data is WsClientMessage {
   if (!("type" in data)) return false;
 
   switch (data["type"]) {
-    case "analyze":
+    case "chat":
       return (
+        typeof data["requestId"] === "string" &&
         typeof data["dialogueId"] === "string" &&
-        typeof data["text"] === "string"
+        typeof data["text"] === "string" &&
+        isSpeechLanguage(data["language"])
       );
+    case "chat_cancel":
+      return true;
     case "settings_update":
       return isRecord(data["settings"]);
     case "mood_reset":
@@ -51,6 +60,7 @@ interface SessionState {
   moodReactivity: number;
   moodDecaySeconds: number;
   emotionWeight: number;
+  activeChat: AbortController | null;
 }
 
 const sessions = new Map<string, SessionState>();
@@ -65,6 +75,7 @@ function getSession(wsId: string, userId: string): SessionState {
       moodReactivity: config.mood.defaultReactivity,
       moodDecaySeconds: config.mood.defaultDecaySeconds,
       emotionWeight: config.mood.defaultEmotionWeight,
+      activeChat: null,
     };
     sessions.set(wsId, session);
   }
@@ -108,6 +119,7 @@ export const wsRoutes = new Elysia()
     },
 
     close(ws) {
+      sessions.get(ws.id)?.activeChat?.abort();
       sessions.delete(ws.id);
     },
 
@@ -215,49 +227,64 @@ export const wsRoutes = new Elysia()
           break;
         }
 
-        case "analyze": {
+        case "chat_cancel": {
+          const session = sessions.get(ws.id);
+          session?.activeChat?.abort();
+          break;
+        }
+
+        case "chat": {
+          const session = getSession(ws.id, wsUserId);
+          const text = parsed.text.trim();
+
+          if (text.length === 0 || text.length > config.ws.maxChatTextLength) {
+            const error: WsServerMessage = {
+              type: "error",
+              message: `Message must be between 1 and ${config.ws.maxChatTextLength} characters`,
+              code: "INVALID_FORMAT",
+            };
+            ws.send(JSON.stringify(error));
+            break;
+          }
+
+          session.activeChat?.abort();
+          const controller = new AbortController();
+          session.activeChat = controller;
+
           try {
-            const session = getSession(ws.id, wsUserId);
             const dialogueId = toDialogueId(parsed.dialogueId);
             await dialogueService.verifyDialogueOwnership(
               dialogueId,
               toUserId(session.userId),
             );
 
-            const { turn, analysis, blendshapes, mood, combinedEmotions } =
-              await dialogueService.analyzeAndSaveTurn({
-                dialogueId,
-                text: parsed.text,
+            await runConversationTurn({
+              requestId: parsed.requestId,
+              dialogueId,
+              text,
+              language: parsed.language,
+              settings: {
                 contextWindowSize: session.contextWindowSize,
                 expressionIntensity: session.expressionIntensity,
                 moodReactivity: session.moodReactivity,
                 moodDecaySeconds: session.moodDecaySeconds,
                 emotionWeight: session.emotionWeight,
-              });
-
-            const result: WsServerMessage = {
-              type: "blendshape_update",
-              turnId: turn.id,
-              text: parsed.text,
-              emotions: {
-                categories: analysis.emotions.categories,
-                vad: analysis.emotions.vad,
-                topEmotions: analysis.emotions.top_emotions,
               },
-              mood,
-              combinedEmotions,
-              blendshapes,
-              processingTimeMs: analysis.processing_time_ms,
-            };
-
-            ws.send(JSON.stringify(result));
+              signal: controller.signal,
+              send: (message) => ws.send(JSON.stringify(message)),
+            });
           } catch (err) {
-            const error: WsServerMessage = {
-              type: "error",
-              message: err instanceof Error ? err.message : "Unknown error",
-              code: "ANALYZE_FAILED",
-            };
-            ws.send(JSON.stringify(error));
+            if (!controller.signal.aborted) {
+              console.error("[chat]", err);
+              const error: WsServerMessage = {
+                type: "error",
+                message: describeConversationError(err),
+                code: "CHAT_FAILED",
+              };
+              ws.send(JSON.stringify(error));
+            }
+          } finally {
+            if (session.activeChat === controller) session.activeChat = null;
           }
           break;
         }

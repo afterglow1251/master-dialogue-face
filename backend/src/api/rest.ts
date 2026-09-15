@@ -6,21 +6,17 @@ import { db } from "../db/index.ts";
 import { characters, emotionTemplates } from "../db/schema.ts";
 import { resolveUserId } from "./auth-middleware.ts";
 import * as dialogueService from "../services/dialogue.service.ts";
-import { nlpClient } from "../services/nlp-client.ts";
 import { toCharacterId, toDialogueId, toUserId } from "../types/index.ts";
 import { HttpError } from "../utils/errors.ts";
 
 // ── Public routes (no auth) ──
 const publicRoutes = new Elysia({ prefix: "/api/v1" })
-  .get("/health", async () => {
-    let nlpStatus = "unavailable";
-    try {
-      const nlpHealth = await nlpClient.healthCheck();
-      nlpStatus = nlpHealth.status;
-    } catch {
-      nlpStatus = "unreachable";
-    }
-    return { status: "ok", nlp: nlpStatus };
+  .get("/health", () => {
+    return {
+      status: "ok",
+      emotionModel: config.emotion.model,
+      llmModel: config.llm.model,
+    };
   })
 
   .get("/characters", async () => {
@@ -137,7 +133,9 @@ const protectedRoutes = new Elysia({ prefix: "/api/v1" })
       const { turn, analysis, blendshapes, mood, combinedEmotions } =
         await dialogueService.analyzeAndSaveTurn({
           dialogueId,
+          role: "user",
           text: body.text,
+          analysisText: body.text,
           contextWindowSize: config.ws.defaultContextWindowSize,
           moodReactivity: config.mood.defaultReactivity,
           moodDecaySeconds: config.mood.defaultDecaySeconds,

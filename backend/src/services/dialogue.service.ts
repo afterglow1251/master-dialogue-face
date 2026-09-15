@@ -3,8 +3,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { dialogues, dialogueTurns } from "../db/schema.ts";
 import { mapEmotionsToBlendshapes } from "./blendshape-mapper.ts";
+import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
-import { nlpClient } from "./nlp-client.ts";
+import type { HistoryTurn } from "./llm.service.ts";
 import type {
   BlendshapeVector,
   CharacterId,
@@ -13,6 +14,7 @@ import type {
   EmotionAnalysisResult,
   EmotionProbabilities,
   MoodState,
+  TurnRole,
   UserId,
   VADValues,
 } from "../types/index.ts";
@@ -90,13 +92,30 @@ export async function getContextTurns(
   contextSize: number,
 ): Promise<readonly string[]> {
   const rows = await db
-    .select({ text: dialogueTurns.text })
+    .select({
+      text: dialogueTurns.text,
+      analysisText: dialogueTurns.analysisText,
+    })
     .from(dialogueTurns)
     .where(eq(dialogueTurns.dialogueId, dialogueId))
     .orderBy(desc(dialogueTurns.turnIndex))
     .limit(contextSize);
 
-  return rows.reverse().map((r) => r.text);
+  return rows.reverse().map((r) => r.analysisText ?? r.text);
+}
+
+export async function getRecentTurns(
+  dialogueId: DialogueId,
+  limit: number,
+): Promise<readonly HistoryTurn[]> {
+  const rows = await db
+    .select({ role: dialogueTurns.role, text: dialogueTurns.text })
+    .from(dialogueTurns)
+    .where(eq(dialogueTurns.dialogueId, dialogueId))
+    .orderBy(desc(dialogueTurns.turnIndex))
+    .limit(limit);
+
+  return rows.reverse();
 }
 
 export async function getNextTurnIndex(
@@ -115,7 +134,9 @@ export async function getNextTurnIndex(
 export async function saveTurn(params: {
   dialogueId: DialogueId;
   turnIndex: number;
+  role: TurnRole;
   text: string;
+  analysisText: string;
   emotionProbabilities: EmotionProbabilities;
   vadValues: VADValues;
   blendshapeVector: BlendshapeVector;
@@ -137,7 +158,9 @@ export interface AnalyzeTurnResult {
 
 export async function analyzeAndSaveTurn(params: {
   dialogueId: DialogueId;
+  role: TurnRole;
   text: string;
+  analysisText: string;
   contextWindowSize: number;
   expressionIntensity?: number;
   moodReactivity: number;
@@ -149,7 +172,7 @@ export async function analyzeAndSaveTurn(params: {
     params.contextWindowSize,
   );
 
-  const analysis = await nlpClient.analyze(params.text, contextRows);
+  const analysis = await analyzeEmotions(params.analysisText, contextRows);
 
   const { mood, combinedEmotions } = await emotionalState.processEmotionalState(
     {
@@ -172,7 +195,9 @@ export async function analyzeAndSaveTurn(params: {
   const turn = await saveTurn({
     dialogueId: params.dialogueId,
     turnIndex,
+    role: params.role,
     text: params.text,
+    analysisText: params.analysisText,
     emotionProbabilities: analysis.emotions.categories,
     vadValues: analysis.emotions.vad,
     blendshapeVector: blendshapes,

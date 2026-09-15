@@ -5,13 +5,20 @@ import type {
   VADValues,
 } from "./emotion.ts";
 import type { CombinedEmotionalState, MoodState } from "./mood.ts";
+import type { SpeechAlignment, SpeechLanguage, TurnRole } from "./speech.ts";
 
 // ── Client → Server ──
 
-interface WsAnalyzeMessage {
-  readonly type: "analyze";
+interface WsChatMessage {
+  readonly type: "chat";
+  readonly requestId: string;
   readonly dialogueId: string;
   readonly text: string;
+  readonly language: SpeechLanguage;
+}
+
+interface WsChatCancelMessage {
+  readonly type: "chat_cancel";
 }
 
 interface WsSettingsUpdateMessage {
@@ -36,26 +43,47 @@ interface WsMoodResetMessage {
 }
 
 export type WsClientMessage =
-  | WsAnalyzeMessage
+  | WsChatMessage
+  | WsChatCancelMessage
   | WsSettingsUpdateMessage
   | WsPingMessage
   | WsMoodResetMessage;
 
 // ── Server → Client ──
 
-interface WsBlendshapeResult {
+export interface WsTurnEmotions {
+  readonly categories: EmotionProbabilities;
+  readonly vad: VADValues;
+  readonly topEmotions: readonly EmotionScore[];
+}
+
+export interface WsBlendshapeResult {
   readonly type: "blendshape_update";
+  readonly requestId: string;
+  readonly role: TurnRole;
   readonly turnId: string;
   readonly text: string;
-  readonly emotions: {
-    readonly categories: EmotionProbabilities;
-    readonly vad: VADValues;
-    readonly topEmotions: readonly EmotionScore[];
-  };
+  readonly emotions: WsTurnEmotions;
   readonly mood: MoodState;
   readonly combinedEmotions: CombinedEmotionalState;
   readonly blendshapes: BlendshapeVector;
   readonly processingTimeMs: number;
+}
+
+export interface WsSpeechChunk {
+  readonly type: "speech_chunk";
+  readonly requestId: string;
+  readonly index: number;
+  readonly text: string;
+  readonly audioBase64: string;
+  readonly alignment: SpeechAlignment;
+  readonly emotions: WsTurnEmotions;
+  readonly blendshapes: BlendshapeVector;
+}
+
+interface WsReplyEnd {
+  readonly type: "reply_end";
+  readonly requestId: string;
 }
 
 interface WsErrorMessage {
@@ -77,6 +105,8 @@ interface WsMoodStateMessage {
 
 export type WsServerMessage =
   | WsBlendshapeResult
+  | WsSpeechChunk
+  | WsReplyEnd
   | WsErrorMessage
   | WsPongMessage
   | WsMoodStateMessage;

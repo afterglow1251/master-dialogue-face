@@ -13,13 +13,15 @@ describe("config", () => {
     expect(config.databaseUrl.length).toBeGreaterThan(0);
   });
 
-  test("nlpServiceUrl is a valid URL", () => {
-    expect(config.nlpServiceUrl).toMatch(/^https?:\/\//);
+  test("external service timeouts are positive numbers", () => {
+    expect(config.emotion.timeoutMs).toBeGreaterThan(0);
+    expect(config.tts.timeoutMs).toBeGreaterThan(0);
   });
 
-  test("nlp timeouts are positive numbers", () => {
-    expect(config.nlp.analyzeTimeoutMs).toBeGreaterThan(0);
-    expect(config.nlp.healthTimeoutMs).toBeGreaterThan(0);
+  test("llm settings are valid", () => {
+    expect(config.llm.model.length).toBeGreaterThan(0);
+    expect(config.llm.maxTokens).toBeGreaterThan(0);
+    expect(config.llm.historyTurns).toBeGreaterThan(0);
   });
 
   test("ws defaults are valid", () => {

@@ -3,8 +3,6 @@
  * Source: NRC Valence, Arousal, and Dominance (VAD) Lexicon v1
  * Author: Saif M. Mohammad (2018)
  * Scale: 0.0 – 1.0
- *
- * These values must match the NLP service's vad_mappings.json exactly.
  */
 
 import type { EmotionLabel, VADValues } from "../types/index.ts";

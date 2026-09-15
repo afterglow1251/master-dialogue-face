@@ -13,6 +13,7 @@ import {
 
 import type { BlendshapeVector } from "@shared/types/blendshape.ts";
 import type { EmotionProbabilities, VADValues } from "@shared/types/emotion.ts";
+import type { TurnRole } from "@shared/types/speech.ts";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -86,7 +87,12 @@ export const dialogueTurns = pgTable(
       .references(() => dialogues.id, { onDelete: "cascade" })
       .notNull(),
     turnIndex: integer("turn_index").notNull(),
+    role: varchar("role", { length: 16 })
+      .$type<TurnRole>()
+      .default("user")
+      .notNull(),
     text: text("text").notNull(),
+    analysisText: text("analysis_text"),
     emotionProbabilities: jsonb(
       "emotion_probabilities",
     ).$type<EmotionProbabilities>(),

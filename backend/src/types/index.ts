@@ -30,6 +30,14 @@ export {
   type MoodParameters,
 } from "@shared/types/mood.ts";
 
+export {
+  isSpeechLanguage,
+  isTurnRole,
+  type SpeechAlignment,
+  type SpeechLanguage,
+  type TurnRole,
+} from "@shared/types/speech.ts";
+
 // Backend-only types and guards
 export {
   isEmotionAnalysisResult,

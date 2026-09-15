@@ -20,4 +20,14 @@ export {
   type MoodParameters,
 } from "./mood.ts";
 
+export {
+  SPEECH_LANGUAGES,
+  TURN_ROLES,
+  isSpeechLanguage,
+  isTurnRole,
+  type SpeechAlignment,
+  type SpeechLanguage,
+  type TurnRole,
+} from "./speech.ts";
+
 export { type WsClientMessage, type WsServerMessage } from "./websocket.ts";
