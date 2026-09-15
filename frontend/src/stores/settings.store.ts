@@ -4,7 +4,6 @@ import { watchEffect, watch } from "vue";
 
 import { i18n, type Locale } from "@/lib/i18n";
 import {
-  DEFAULT_CONTEXT_WINDOW_SIZE,
   DEFAULT_EXPRESSION_INTENSITY,
   DEFAULT_SMOOTHING_ALPHA,
   DEFAULT_MOOD_REACTIVITY,
@@ -16,10 +15,6 @@ export const useSettingsStore = defineStore("settings", () => {
   const smoothingAlpha = useLocalStorage(
     "settings:smoothingAlpha",
     DEFAULT_SMOOTHING_ALPHA,
-  );
-  const contextWindowSize = useLocalStorage(
-    "settings:contextWindowSize",
-    DEFAULT_CONTEXT_WINDOW_SIZE,
   );
   const expressionIntensity = useLocalStorage(
     "settings:expressionIntensity",
@@ -55,7 +50,6 @@ export const useSettingsStore = defineStore("settings", () => {
 
   function resetDefaults() {
     smoothingAlpha.value = DEFAULT_SMOOTHING_ALPHA;
-    contextWindowSize.value = DEFAULT_CONTEXT_WINDOW_SIZE;
     expressionIntensity.value = DEFAULT_EXPRESSION_INTENSITY;
     moodReactivity.value = DEFAULT_MOOD_REACTIVITY;
     moodDecaySeconds.value = DEFAULT_MOOD_DECAY_SECONDS;
@@ -64,7 +58,6 @@ export const useSettingsStore = defineStore("settings", () => {
 
   return {
     smoothingAlpha,
-    contextWindowSize,
     expressionIntensity,
     moodReactivity,
     moodDecaySeconds,

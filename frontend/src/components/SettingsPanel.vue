@@ -3,7 +3,6 @@ import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings.store";
 import {
-  DEFAULT_CONTEXT_WINDOW_SIZE,
   DEFAULT_EXPRESSION_INTENSITY,
   DEFAULT_SMOOTHING_ALPHA,
   DEFAULT_MOOD_REACTIVITY,
@@ -12,9 +11,6 @@ import {
   SMOOTHING_ALPHA_MIN,
   SMOOTHING_ALPHA_MAX,
   SMOOTHING_ALPHA_STEP,
-  CONTEXT_WINDOW_SIZE_MIN,
-  CONTEXT_WINDOW_SIZE_MAX,
-  CONTEXT_WINDOW_SIZE_STEP,
   EXPRESSION_INTENSITY_MIN,
   EXPRESSION_INTENSITY_MAX,
   EXPRESSION_INTENSITY_STEP,
@@ -40,7 +36,6 @@ const { t } = useI18n();
 const settingsStore = useSettingsStore();
 const {
   smoothingAlpha,
-  contextWindowSize,
   expressionIntensity,
   moodReactivity,
   moodDecaySeconds,
@@ -75,29 +70,6 @@ function formatDecayTime(seconds: number): string {
         :step="SMOOTHING_ALPHA_STEP"
         @update:model-value="
           (v?: number[]) => (smoothingAlpha = v?.[0] ?? DEFAULT_SMOOTHING_ALPHA)
-        "
-      />
-    </div>
-
-    <Separator />
-
-    <div class="space-y-3">
-      <div class="flex items-center justify-between">
-        <label class="text-sm font-medium">{{
-          t("tuning.contextWindow")
-        }}</label>
-        <span class="text-sm tabular-nums text-muted-foreground">
-          {{ contextWindowSize }}
-        </span>
-      </div>
-      <Slider
-        :model-value="[contextWindowSize]"
-        :min="CONTEXT_WINDOW_SIZE_MIN"
-        :max="CONTEXT_WINDOW_SIZE_MAX"
-        :step="CONTEXT_WINDOW_SIZE_STEP"
-        @update:model-value="
-          (v?: number[]) =>
-            (contextWindowSize = v?.[0] ?? DEFAULT_CONTEXT_WINDOW_SIZE)
         "
       />
     </div>

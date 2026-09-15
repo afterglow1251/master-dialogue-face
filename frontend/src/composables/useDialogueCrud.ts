@@ -22,7 +22,9 @@ export function useDialogueCrud() {
   }
 
   async function loadDialogueList() {
+    dialogueStore.isLoadingList = true;
     const { data } = await api.api.v1.dialogues.get();
+    dialogueStore.isLoadingList = false;
     if (!data) return;
     dialogueStore.setDialogueList(
       data.map((d) => ({
@@ -62,7 +64,11 @@ export function useDialogueCrud() {
     dialogueStore.setDialogue(dialogueId);
     emotionStore.reset();
 
+    dialogueStore.isLoadingTurns = true;
     const { data } = await api.api.v1.dialogues({ id: dialogueId }).get();
+    if (dialogueStore.currentDialogueId === dialogueId) {
+      dialogueStore.isLoadingTurns = false;
+    }
     if (!data) return false;
 
     const turns: DialogueTurn[] = data.turns.map((t) => ({
@@ -121,6 +127,7 @@ export function useDialogueCrud() {
         isInitialized.value = true;
       } catch (err) {
         console.error("Failed to initialize:", err);
+        dialogueStore.isLoadingList = false;
       }
     },
     { immediate: true },

@@ -1,14 +1,9 @@
 export const DEFAULT_SMOOTHING_ALPHA = 0.3;
-export const DEFAULT_CONTEXT_WINDOW_SIZE = 3;
 export const DEFAULT_EXPRESSION_INTENSITY = 1.0;
 
 export const SMOOTHING_ALPHA_MIN = 0.01;
 export const SMOOTHING_ALPHA_MAX = 1;
 export const SMOOTHING_ALPHA_STEP = 0.01;
-
-export const CONTEXT_WINDOW_SIZE_MIN = 0;
-export const CONTEXT_WINDOW_SIZE_MAX = 10;
-export const CONTEXT_WINDOW_SIZE_STEP = 1;
 
 export const EXPRESSION_INTENSITY_MIN = 0;
 export const EXPRESSION_INTENSITY_MAX = 2;

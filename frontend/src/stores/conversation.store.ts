@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
+import type { TurnRole } from "@shared/types/speech";
 import type { WsSpeechChunk } from "@shared/types/websocket";
 import { SpeechPlayer } from "@/lib/speechPlayer";
 import { useEmotionStore } from "@/stores/emotion.store";
@@ -16,6 +17,8 @@ export const useConversationStore = defineStore("conversation", () => {
   const userText = ref("");
   const replyText = ref("");
   const errorMessage = ref<string | null>(null);
+  const awaitingUserTurn = ref(false);
+  const assistantTurnId = ref<string | null>(null);
   let replyEnded = false;
 
   const isBusy = computed(() => phase.value !== "idle");
@@ -50,12 +53,20 @@ export const useConversationStore = defineStore("conversation", () => {
     userText.value = text;
     replyText.value = "";
     errorMessage.value = null;
+    awaitingUserTurn.value = true;
+    assistantTurnId.value = null;
     replyEnded = false;
     phase.value = "thinking";
   }
 
   function isActive(requestId: string): boolean {
     return activeRequestId.value === requestId;
+  }
+
+  function markTurnSaved(requestId: string, role: TurnRole, turnId: string) {
+    if (!isActive(requestId)) return;
+    if (role === "user") awaitingUserTurn.value = false;
+    else assistantTurnId.value = turnId;
   }
 
   function receiveChunk(chunk: WsSpeechChunk) {
@@ -71,6 +82,7 @@ export const useConversationStore = defineStore("conversation", () => {
 
   function cancel() {
     player.reset();
+    awaitingUserTurn.value = false;
     finish();
   }
 
@@ -96,8 +108,11 @@ export const useConversationStore = defineStore("conversation", () => {
     userText,
     replyText,
     errorMessage,
+    awaitingUserTurn,
+    assistantTurnId,
     isBusy,
     startRequest,
+    markTurnSaved,
     receiveChunk,
     endReply,
     cancel,

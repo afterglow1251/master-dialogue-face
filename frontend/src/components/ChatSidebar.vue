@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import EmptyState from "@/components/EmptyState.vue";
+import LoadingState from "@/components/LoadingState.vue";
 import { storeToRefs } from "pinia";
 import { useDialogueStore } from "@/stores/dialogue.store";
 import { useEmotionStore } from "@/stores/emotion.store";
@@ -23,7 +24,8 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const dialogueStore = useDialogueStore();
 const emotionStore = useEmotionStore();
-const { dialogueList, currentDialogueId } = storeToRefs(dialogueStore);
+const { dialogueList, currentDialogueId, isLoadingList } =
+  storeToRefs(dialogueStore);
 
 const MS_PER_DAY = 86_400_000;
 const RELATIVE_DAYS_LIMIT = 7;
@@ -103,7 +105,7 @@ function handleTitleBlur(
   if (newTitle && newTitle !== (originalTitle ?? "")) {
     emit("renameChat", dialogueId, newTitle);
   } else if (!newTitle) {
-    el.textContent = originalTitle ?? t("chat.untitled");
+    el.textContent = originalTitle ?? t("chat.newChat");
   }
 }
 
@@ -143,7 +145,7 @@ function handleTitleKeydown(event: KeyboardEvent) {
               @blur="handleTitleBlur($event, dialogue.id, dialogue.title)"
               @keydown="handleTitleKeydown"
             >
-              {{ dialogue.title ?? t("chat.untitled") }}
+              {{ dialogue.title ?? t("chat.newChat") }}
             </p>
             <span class="text-xs text-muted-foreground">
               {{ formatDate(dialogue.createdAt) }}
@@ -176,8 +178,10 @@ function handleTitleKeydown(event: KeyboardEvent) {
           </div>
         </div>
 
+        <LoadingState v-if="isLoadingList" :label="t('common.loading')" />
+
         <EmptyState
-          v-if="dialogueList.length === 0"
+          v-else-if="dialogueList.length === 0"
           :icon="MessageSquareDashed"
           :message="t('chat.empty')"
         />

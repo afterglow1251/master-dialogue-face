@@ -5,12 +5,10 @@ import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import {
   PanelLeft,
-  Radar,
   Settings,
   X,
   ArrowLeft,
   SquarePen,
-  History,
   LoaderCircle,
   Moon,
   Sun,
@@ -24,33 +22,19 @@ import { useConversationStore } from "@/stores/conversation.store";
 import { useAppWebSocket } from "@/composables/useWebSocket";
 import { useDialogueCrud } from "@/composables/useDialogueCrud";
 import AvatarScene from "@/components/AvatarScene.vue";
-import DialogueInput from "@/components/DialogueInput.vue";
-import SpeechSubtitle from "@/components/SpeechSubtitle.vue";
-import DialogueHistory from "@/components/DialogueHistory.vue";
+import ChatPanel from "@/components/ChatPanel.vue";
 import EmotionPanel from "@/components/EmotionPanel.vue";
-import EmotionChart from "@/components/EmotionChart.vue";
 import SettingsPanel from "@/components/SettingsPanel.vue";
 import ChatSidebar from "@/components/ChatSidebar.vue";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 const AVATAR_MODEL_URL = "/models/avatar-WCpLm2TimIAYnTVYq3uS.glb";
-const floatingSurfaceClass =
-  "border border-border/60 bg-background/80 shadow-sm backdrop-blur-sm";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const dialogueStore = useDialogueStore();
 const emotionStore = useEmotionStore();
-const { topEmotions } = storeToRefs(emotionStore);
-const { currentProbabilities } = storeToRefs(emotionStore);
 const { isDark, locale } = storeToRefs(useSettingsStore());
 const conversationStore = useConversationStore();
 const { isBusy } = storeToRefs(conversationStore);
@@ -71,10 +55,9 @@ async function handleDeleteChat(dialogueId: string) {
   }
 }
 
-type SidebarPanel = "main" | "tuning" | "history";
+type SidebarPanel = "main" | "tuning";
 const showSidebar = ref(false);
 const sidebarPanel = ref<SidebarPanel>("main");
-const showRadar = ref(false);
 const isCreatingChat = ref(false);
 
 // Reset panel to main when sidebar closes
@@ -123,6 +106,11 @@ async function handleSubmit(text: string) {
   sendChat(text);
 }
 
+function handleRenameCurrentChat(title: string) {
+  const dialogueId = dialogueStore.currentDialogueId;
+  if (dialogueId) void renameChat(dialogueId, title);
+}
+
 async function handleNewChat() {
   isCreatingChat.value = true;
   const id = await createNewChat();
@@ -139,59 +127,35 @@ async function handleSelectChat(dialogueId: string) {
 </script>
 
 <template>
-  <div class="relative h-screen w-screen overflow-hidden bg-background">
-    <!-- Avatar: full screen background -->
-    <div class="absolute inset-0">
-      <AvatarScene :model-url="AVATAR_MODEL_URL" />
-    </div>
+  <div
+    class="flex h-dvh w-screen flex-col overflow-hidden bg-background md:flex-row"
+  >
+    <section class="relative h-[42dvh] shrink-0 md:h-auto md:flex-1">
+      <div class="absolute inset-0">
+        <AvatarScene :model-url="AVATAR_MODEL_URL" />
+      </div>
 
-    <!-- Top bar -->
-    <header
-      class="absolute left-0 right-0 top-0 z-10 flex items-center justify-between px-4 py-3"
-    >
-      <div class="flex items-center gap-2">
+      <header class="absolute left-0 top-0 z-10 px-4 py-3">
         <Button variant="toolbar" size="icon" @click="showSidebar = true">
           <PanelLeft :size="18" />
         </Button>
+      </header>
+
+      <div class="absolute bottom-0 left-0 right-0 z-10 hidden p-4 md:block">
+        <div class="mx-auto max-w-xl">
+          <EmotionPanel />
+        </div>
       </div>
-      <div />
-    </header>
+    </section>
 
-    <!-- Compact emotion badges: floating top-left under header -->
-    <div
-      v-if="topEmotions.length > 0"
-      class="absolute left-4 top-16 z-10 flex flex-col gap-1.5"
-    >
-      <div
-        v-for="emotion in topEmotions.slice(0, 3)"
-        :key="emotion.name"
-        :class="[
-          floatingSurfaceClass,
-          'flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs',
-        ]"
-      >
-        <span>{{ t("emotions." + emotion.name) }}</span>
-        <span class="font-medium text-primary">
-          {{ (emotion.probability * 100).toFixed(1) }}%
-        </span>
-      </div>
-    </div>
-
-    <!-- Bottom: Chat area overlay -->
-    <div
-      class="absolute bottom-0 left-1/2 z-10 w-full max-w-2xl -translate-x-1/2 space-y-2 p-4"
-    >
-      <EmotionPanel />
-
-      <SpeechSubtitle />
-
-      <DialogueInput
-        :busy="isBusy"
-        :language="locale"
-        @submit="handleSubmit"
-        @stop="cancelChat"
-      />
-    </div>
+    <ChatPanel
+      class="min-h-0 flex-1 border-t md:w-[26rem] md:flex-none md:border-l md:border-t-0 lg:w-[30rem]"
+      :busy="isBusy"
+      :language="locale"
+      @submit="handleSubmit"
+      @stop="cancelChat"
+      @rename="handleRenameCurrentChat"
+    />
 
     <!-- Workspace Sidebar -->
     <Teleport to="body">
@@ -230,7 +194,7 @@ async function handleSelectChat(dialogueId: string) {
             </button>
             <span v-else />
             <button
-              class="ring-offset-background focus:ring-ring rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
+              class="ring-offset-background focus-visible:ring-ring rounded-sm opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus:outline-hidden"
               @click="showSidebar = false"
             >
               <X class="size-4" />
@@ -265,20 +229,6 @@ async function handleSelectChat(dialogueId: string) {
               </button>
               <button
                 class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-                @click="sidebarPanel = 'history'"
-              >
-                <History :size="16" />
-                {{ t("sidebar.history") }}
-              </button>
-              <button
-                class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-                @click="showRadar = true"
-              >
-                <Radar :size="16" />
-                {{ t("sidebar.radar") }}
-              </button>
-              <button
-                class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
                 @click="sidebarPanel = 'tuning'"
               >
                 <Settings :size="16" />
@@ -287,6 +237,11 @@ async function handleSelectChat(dialogueId: string) {
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col">
+              <p
+                class="mb-1 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              >
+                {{ t("sidebar.chats") }}
+              </p>
               <ChatSidebar
                 class="flex-1"
                 @new-chat="handleNewChat"
@@ -393,39 +348,8 @@ async function handleSelectChat(dialogueId: string) {
               <SettingsPanel @reset-mood="resetMood" />
             </div>
           </template>
-
-          <!-- Panel: History -->
-          <template v-else-if="sidebarPanel === 'history'">
-            <h2 class="text-lg font-semibold tracking-tight">
-              {{ t("history.title") }}
-            </h2>
-            <p class="mb-4 text-sm text-muted-foreground">
-              {{ t("history.description") }}
-            </p>
-            <div class="flex-1 overflow-y-auto">
-              <DialogueHistory />
-            </div>
-          </template>
         </div>
       </Transition>
     </Teleport>
-
-    <!-- Emotion Radar Dialog -->
-    <Dialog v-model:open="showRadar">
-      <DialogContent
-        :class="['p-6', currentProbabilities ? 'sm:max-w-3xl' : 'sm:max-w-md']"
-        @close-auto-focus.prevent
-      >
-        <DialogHeader :class="currentProbabilities ? 'mb-4' : 'mb-0'">
-          <DialogTitle class="text-lg">{{
-            t("emotionRadar.title")
-          }}</DialogTitle>
-          <DialogDescription>
-            {{ t("emotionRadar.description") }}
-          </DialogDescription>
-        </DialogHeader>
-        <EmotionChart />
-      </DialogContent>
-    </Dialog>
   </div>
 </template>

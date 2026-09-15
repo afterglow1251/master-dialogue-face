@@ -5,21 +5,26 @@
   },
   "sidebar": {
     "newChat": "New chat",
-    "history": "History",
-    "radar": "Radar",
     "tuning": "Tuning",
     "darkMode": "Dark mode",
     "lightMode": "Light mode",
     "account": "Account",
-    "accountDescription": "Manage profile and sign out"
+    "accountDescription": "Manage profile and sign out",
+    "chats": "Chats"
   },
   "chat": {
-    "untitled": "Untitled chat",
     "empty": "No chats yet",
     "rename": "Rename chat",
     "delete": "Delete chat",
     "yesterday": "Yesterday",
-    "daysAgo": "{n} day ago | {n} days ago"
+    "daysAgo": "{n} day ago | {n} days ago",
+    "moodLabel": "mood",
+    "mood": {
+      "up": "Avatar mood improved",
+      "down": "Avatar mood worsened",
+      "flat": "Avatar mood barely changed"
+    },
+    "newChat": "New chat"
   },
   "preferences": {
     "title": "Preferences",
@@ -41,20 +46,28 @@
     "error": "Could not get a reply"
   },
   "history": {
-    "title": "Dialogue History",
-    "description": "Click the chart icon on any message for details",
     "empty": "Start a conversation to see the dialogue history",
     "viewReport": "View emotion report"
   },
-  "emotionRadar": {
-    "title": "Emotion Radar",
-    "description": "Acute emotion vs accumulated mood distribution",
-    "acuteEmotion": "Acute Emotion",
+  "moodTimeline": {
     "mood": "Mood",
-    "noData": "No data yet. Enter text to see emotion distribution."
+    "turnEmotion": "Turn emotion",
+    "neutral": "Neutral level",
+    "turnAxis": "Turn",
+    "valenceAxis": "negative ↔ positive",
+    "positiveEmotion": "Positive turn emotion",
+    "neutralEmotion": "Neutral turn emotion",
+    "negativeEmotion": "Negative turn emotion"
+  },
+  "conversationDynamics": {
+    "title": "Conversation dynamics",
+    "description": "Avatar mood over the conversation"
   },
   "emotionReport": {
     "title": "Emotion Report — Turn {turn}",
+    "tabReport": "Report",
+    "tabDynamics": "Dynamics",
+    "turnEffect": "Turn effect",
     "detectedEmotions": "Detected Emotions",
     "moodState": "Mood State",
     "changeFromPrevious": "Change from Previous Turn",
@@ -69,7 +82,6 @@
     "description": "Adjust animation, analysis, and mood parameters",
     "animation": "Animation",
     "smoothing": "Smoothing",
-    "contextWindow": "Context window",
     "intensity": "Intensity",
     "moodModel": "Mood Model",
     "reactivity": "Reactivity",
@@ -120,6 +132,7 @@
     "joy": "Joy",
     "love": "Love",
     "nervousness": "Nervousness",
+    "neutral": "Neutral",
     "optimism": "Optimism",
     "pride": "Pride",
     "realization": "Realization",
@@ -130,6 +143,7 @@
   },
   "common": {
     "close": "Close",
-    "back": "Workspace"
+    "back": "Workspace",
+    "loading": "Loading..."
   }
 }

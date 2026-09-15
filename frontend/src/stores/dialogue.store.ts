@@ -37,8 +37,10 @@ export interface DialogueSummary {
 export const useDialogueStore = defineStore("dialogue", () => {
   const currentDialogueId = ref<string | null>(null);
   const turns = ref<DialogueTurn[]>([]);
+  const isLoadingTurns = ref(false);
 
   const dialogueList = ref<DialogueSummary[]>([]);
+  const isLoadingList = ref(true);
 
   const currentTitle = computed(() => {
     const dialogue = dialogueList.value.find(
@@ -84,12 +86,16 @@ export const useDialogueStore = defineStore("dialogue", () => {
     currentDialogueId.value = null;
     turns.value = [];
     dialogueList.value = [];
+    isLoadingTurns.value = false;
+    isLoadingList.value = true;
   }
 
   return {
     currentDialogueId,
     turns,
+    isLoadingTurns,
     dialogueList,
+    isLoadingList,
     currentTitle,
     setDialogue,
     addTurn,

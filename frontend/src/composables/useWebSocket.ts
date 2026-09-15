@@ -63,6 +63,11 @@ export function useAppWebSocket() {
 
   function handleTurnSaved(message: WsBlendshapeResult) {
     const isFirstTurn = dialogueStore.turns.length === 0;
+    conversationStore.markTurnSaved(
+      message.requestId,
+      message.role,
+      message.turnId,
+    );
 
     dialogueStore.addTurn({
       id: message.turnId,
@@ -181,7 +186,6 @@ export function useAppWebSocket() {
   }
 
   const {
-    contextWindowSize,
     expressionIntensity,
     moodReactivity,
     moodDecaySeconds,
@@ -189,18 +193,11 @@ export function useAppWebSocket() {
   } = storeToRefs(settingsStore);
 
   watchDebounced(
-    [
-      contextWindowSize,
-      expressionIntensity,
-      moodReactivity,
-      moodDecaySeconds,
-      emotionWeight,
-    ],
+    [expressionIntensity, moodReactivity, moodDecaySeconds, emotionWeight],
     () => {
       sendMessage({
         type: "settings_update",
         settings: {
-          contextWindowSize: contextWindowSize.value,
           expressionIntensity: expressionIntensity.value,
           moodReactivity: moodReactivity.value,
           moodDecaySeconds: moodDecaySeconds.value,

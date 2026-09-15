@@ -2,10 +2,11 @@
 import { computed, nextTick, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useTextareaAutosize } from "@vueuse/core";
-import { ArrowUp, Mic, MicOff, Square } from "lucide-vue-next";
+import { ArrowUp, Mic, Square } from "lucide-vue-next";
 
 import type { SpeechLanguage } from "@shared/types/speech";
 import { Button } from "@/components/ui/button";
+import VoiceBars from "@/components/VoiceBars.vue";
 import { useDictation } from "@/composables/useDictation";
 
 const DICTATION_LANGUAGES = new Map<SpeechLanguage, string>([
@@ -98,11 +99,12 @@ function handleKeydown(event: KeyboardEvent) {
         "
         :class="[
           'h-8 w-8 shrink-0 rounded-[999px]',
-          dictation.isListening.value && 'animate-pulse text-destructive',
+          dictation.isListening.value &&
+            'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground',
         ]"
         @click="toggleDictation"
       >
-        <MicOff v-if="dictation.isListening.value" :size="16" />
+        <VoiceBars v-if="dictation.isListening.value" />
         <Mic v-else :size="16" />
       </Button>
 
