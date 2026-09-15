@@ -20,45 +20,15 @@ services:
       timeout: 3s
       retries: 5
 
-  nlp-service:
-    build:
-      context: ./nlp-service
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - MODEL_NAME=${MODEL_NAME:-SamLowe/roberta-base-go_emotions}
-      - DEVICE=${DEVICE:-cpu}
-      - NLP_PORT=8000
-    ports:
-      - "${NLP_PORT:-8000}:8000"
-    volumes:
-      - model_cache:/home/user/.cache/huggingface
-      - ./nlp-service/app:/app/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 180s
-
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    env_file: ./backend/.env
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-facial_user}:${DB_PASSWORD:-facial_pass}@postgres:5432/${DB_NAME:-facial_expressions}
-      - NLP_SERVICE_URL=http://nlp-service:8000
       - PORT=3000
-      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
-      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
-      - NLP_ANALYZE_TIMEOUT_MS=${NLP_ANALYZE_TIMEOUT_MS:-30000}
-      - NLP_HEALTH_TIMEOUT_MS=${NLP_HEALTH_TIMEOUT_MS:-5000}
-      - WS_DEFAULT_CONTEXT_WINDOW_SIZE=${WS_DEFAULT_CONTEXT_WINDOW_SIZE:-3}
-      - WS_DEFAULT_EXPRESSION_INTENSITY=${WS_DEFAULT_EXPRESSION_INTENSITY:-1.0}
-      - WS_MAX_CONTEXT_WINDOW_SIZE=${WS_MAX_CONTEXT_WINDOW_SIZE:-10}
-      - WS_MAX_EXPRESSION_INTENSITY=${WS_MAX_EXPRESSION_INTENSITY:-2.0}
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     volumes:
@@ -68,18 +38,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      nlp-service:
-        condition: service_healthy
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile.dev
     restart: unless-stopped
-    environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3000}
-      - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:3000/ws}
-      - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+    env_file: ./frontend/.env
     ports:
       - "5173:5173"
     volumes:
@@ -91,5 +56,4 @@ services:
       - backend
 
 volumes:
-  model_cache:
   pgdata:

@@ -13,12 +13,18 @@ services:
         sync: false
       - key: CLERK_PUBLISHABLE_KEY
         sync: false
-      - key: NLP_SERVICE_URL
+      - key: HF_TOKEN
         sync: false
-      - key: NLP_ANALYZE_TIMEOUT_MS
-        value: "30000"
-      - key: NLP_HEALTH_TIMEOUT_MS
-        value: "5000"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: claude-haiku-4-5
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        sync: false
+      - key: ELEVENLABS_MODEL_ID
+        value: eleven_flash_v2_5
 
   - type: web
     name: frontend

@@ -2,20 +2,20 @@
 
 # Facial Expression Generator
 
-System for automatic generation of realistic facial expressions of virtual characters based on dialogue emotional context analysis. Master's thesis project that analyzes text emotions via NLP (RoBERTa, 27 GoEmotions categories), maps them to 52 ARKit blendshapes, and animates a 3D avatar at 60 fps.
+System for automatic generation of realistic facial expressions of virtual characters based on dialogue emotional context analysis. Master's thesis project: the avatar holds a spoken conversation (voice dictation, Claude Haiku replies, ElevenLabs speech with lip-sync), analyzes the emotion of every sentence via RoBERTa (27 GoEmotions categories), maps it to 52 ARKit blendshapes, and animates a 3D avatar at 60 fps.
 
 ## Architecture
 
 ```
-┌─────────────┐    WebSocket/REST    ┌─────────────┐    HTTP    ┌──────────────┐
-│   Frontend  │ ◄──────────────────► │   Backend   │ ─────────► │  NLP Service │
-│  Vue 3 +    │                      │  Elysia.js  │            │  FastAPI +   │
-│  Three.js   │                      │  Bun        │            │  RoBERTa     │
-└─────────────┘                      └──────┬──────┘            └──────────────┘
-                                            │
-                                     ┌──────▼──────┐
-                                     │ PostgreSQL  │
-                                     └─────────────┘
+┌─────────────┐  WebSocket/REST  ┌─────────────┐  HTTPS  ┌────────────────────────────┐
+│  Frontend   │ ◄──────────────► │   Backend   │ ──────► │ External AI APIs           │
+│  Vue 3 +    │                  │  Elysia.js  │         │ · Anthropic (Claude Haiku) │
+│  Three.js   │                  │  Bun        │         │ · Hugging Face (RoBERTa)   │
+└─────────────┘                  └──────┬──────┘         │ · ElevenLabs (TTS)         │
+                                        │                └────────────────────────────┘
+                                 ┌──────▼──────┐
+                                 │ PostgreSQL  │
+                                 └─────────────┘
 ```
 
 ## Tech Stack
@@ -24,7 +24,7 @@ System for automatic generation of realistic facial expressions of virtual chara
 | ----------- | --- |
 | Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3 |
 | Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox |
-| NLP Service | Python 3.11, FastAPI 0.115+, PyTorch 2.5+, Transformers 4.47+ |
+| AI services | Claude Haiku 4.5 (Anthropic SDK), RoBERTa go_emotions (Hugging Face Inference Providers), ElevenLabs TTS, Web Speech API |
 | Database    | PostgreSQL 16 |
 | Auth        | Clerk (JWT) |
 | DevOps      | Docker, Docker Compose |
@@ -35,10 +35,10 @@ TypeScript versions are pinned (no `^` / `~`) — TypeScript does not follow sem
 
 ```bash
 git clone https://github.com/afterglow1251/master-dialogue-face && cd master-code
-cp .env.example .env
-# Fill: DATABASE_URL, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY, VITE_CLERK_PUBLISHABLE_KEY
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Fill: DATABASE_URL, CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
 docker compose up -d
-docker compose logs -f nlp-service   # Wait ~2 min on first run (RoBERTa downloads)
 # Open http://localhost
 ```
 
@@ -46,7 +46,8 @@ docker compose logs -f nlp-service   # Wait ~2 min on first run (RoBERTa downloa
 
 ### Prerequisites
 
-- Bun ≥ 1.2 · Python ≥ 3.11 · PostgreSQL 16 · Docker (optional)
+- Bun ≥ 1.2 · PostgreSQL 16 · Docker (optional)
+- Chrome or Edge for voice dictation (Web Speech API)
 
 ### Setup
 
@@ -54,10 +55,10 @@ docker compose logs -f nlp-service   # Wait ~2 min on first run (RoBERTa downloa
 bun install
 cd backend && bun install && cd ..
 cd frontend && bun install && cd ..
-cd nlp-service && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && cd ..
 
-cp .env.example .env
-# Fill environment variables (see .env.example)
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Fill environment variables (see the .env.example files)
 ```
 
 ### Run Services
@@ -65,13 +66,10 @@ cp .env.example .env
 Each in its own terminal:
 
 ```bash
-# 1. NLP Service (downloads ~500 MB RoBERTa on first run)
-cd nlp-service && uvicorn app.main:app --reload --port 8000
-
-# 2. Backend
+# 1. Backend
 cd backend && bun run db:migrate && bun run db:seed && bun run dev
 
-# 3. Frontend
+# 2. Frontend
 cd frontend && bun run dev
 ```
 
@@ -80,7 +78,6 @@ cd frontend && bun run dev
 | Frontend          | http://localhost:5173 |
 | Backend API       | http://localhost:3000 |
 | Backend WebSocket | ws://localhost:3000/ws |
-| NLP Service       | http://localhost:8000 |
 | OpenAPI Docs      | http://localhost:3000/openapi |
 
 ### Docker Development
@@ -93,21 +90,22 @@ Mounts source directories for hot-reload.
 
 ## Environment Variables
 
-See `.env.example` for all variables. Required:
+Each app has its own env file: `backend/.env` (copy from `backend/.env.example`) and `frontend/.env` (copy from `frontend/.env.example`). Docker Compose reads the same files via `env_file`. Required:
 
 - `DATABASE_URL` — PostgreSQL connection string
 - `CLERK_SECRET_KEY` · `CLERK_PUBLISHABLE_KEY` — Clerk auth keys
 - `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key for frontend
+- `HF_TOKEN` — Hugging Face token for the RoBERTa emotion model
+- `ANTHROPIC_API_KEY` — Claude API key for avatar replies
+- `ELEVENLABS_API_KEY` · `ELEVENLABS_VOICE_ID` — ElevenLabs text-to-speech
 
 ## Testing
 
 ```bash
-cd backend && bun test          # 80 unit tests
-cd nlp-service && pytest        # 77 unit tests
-cd nlp-service && pytest --cov  # with coverage
+cd backend && bun test          # 89 unit tests
 ```
 
-**Total: 157 tests** covering NLP API, schemas, VAD conversion, probability normalization, blendshape mapping, mood model, and type safety.
+Covers the reply line protocol, emotion score parsing, VAD conversion, probability normalization, blendshape mapping, mood model, and type safety.
 
 ## Resources
 
