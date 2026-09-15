@@ -12,14 +12,15 @@
 export function applyEMA(
   current: Record<string, number>,
   target: Record<string, number>,
-  alpha: number,
+  alpha: number | ((key: string) => number),
 ): Record<string, number> {
   const result: Record<string, number> = {};
 
   for (const key of Object.keys(target)) {
     const currentVal = current[key] ?? 0;
     const targetVal = target[key] ?? 0;
-    result[key] = alpha * targetVal + (1 - alpha) * currentVal;
+    const keyAlpha = typeof alpha === "number" ? alpha : alpha(key);
+    result[key] = keyAlpha * targetVal + (1 - keyAlpha) * currentVal;
   }
 
   return result;

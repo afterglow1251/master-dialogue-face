@@ -20,10 +20,12 @@ import { UserButton } from "@clerk/vue";
 import { useDialogueStore } from "@/stores/dialogue.store";
 import { useEmotionStore } from "@/stores/emotion.store";
 import { useSettingsStore } from "@/stores/settings.store";
+import { useConversationStore } from "@/stores/conversation.store";
 import { useAppWebSocket } from "@/composables/useWebSocket";
 import { useDialogueCrud } from "@/composables/useDialogueCrud";
 import AvatarScene from "@/components/AvatarScene.vue";
 import DialogueInput from "@/components/DialogueInput.vue";
+import SpeechSubtitle from "@/components/SpeechSubtitle.vue";
 import DialogueHistory from "@/components/DialogueHistory.vue";
 import EmotionPanel from "@/components/EmotionPanel.vue";
 import EmotionChart from "@/components/EmotionChart.vue";
@@ -46,12 +48,13 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const dialogueStore = useDialogueStore();
-const { isLoading } = storeToRefs(dialogueStore);
 const emotionStore = useEmotionStore();
 const { topEmotions } = storeToRefs(emotionStore);
 const { currentProbabilities } = storeToRefs(emotionStore);
 const { isDark, locale } = storeToRefs(useSettingsStore());
-const { analyzeText, resetMood } = useAppWebSocket();
+const conversationStore = useConversationStore();
+const { isBusy } = storeToRefs(conversationStore);
+const { sendChat, cancelChat, resetMood } = useAppWebSocket();
 const {
   createNewChat,
   selectChat,
@@ -78,6 +81,15 @@ const isCreatingChat = ref(false);
 watch(showSidebar, (open) => {
   if (!open) sidebarPanel.value = "main";
 });
+
+watch(
+  () => dialogueStore.currentDialogueId,
+  () => {
+    if (isBusy.value) cancelChat();
+    conversationStore.clear();
+  },
+  { flush: "sync" },
+);
 
 // Load chat from URL param
 watch(
@@ -108,7 +120,7 @@ async function handleSubmit(text: string) {
       void router.replace({ name: "chat-detail", params: { chatId: id } });
     }
   }
-  analyzeText(text);
+  sendChat(text);
 }
 
 async function handleNewChat() {
@@ -171,7 +183,14 @@ async function handleSelectChat(dialogueId: string) {
     >
       <EmotionPanel />
 
-      <DialogueInput :disabled="isLoading" @submit="handleSubmit" />
+      <SpeechSubtitle />
+
+      <DialogueInput
+        :busy="isBusy"
+        :language="locale"
+        @submit="handleSubmit"
+        @stop="cancelChat"
+      />
     </div>
 
     <!-- Workspace Sidebar -->

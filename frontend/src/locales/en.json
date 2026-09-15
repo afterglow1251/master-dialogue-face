@@ -28,12 +28,22 @@
     "colorScheme": "Color scheme"
   },
   "input": {
-    "placeholder": "Type a line to analyze..."
+    "placeholder": "Type or dictate a message...",
+    "listening": "Listening...",
+    "startDictation": "Dictate with voice",
+    "stopDictation": "Stop dictation",
+    "stopReply": "Stop reply"
+  },
+  "speech": {
+    "you": "You",
+    "avatar": "Avatar",
+    "thinking": "Thinking...",
+    "error": "Could not get a reply"
   },
   "history": {
     "title": "Dialogue History",
     "description": "Click the chart icon on any message for details",
-    "empty": "Start typing to begin a dialogue",
+    "empty": "Start a conversation to see the dialogue history",
     "viewReport": "View emotion report"
   },
   "emotionRadar": {

@@ -8,9 +8,11 @@ import type {
 } from "@shared/types/emotion";
 import type { BlendshapeVector } from "@shared/types/blendshape";
 import type { CombinedEmotionalState, MoodState } from "@shared/types/mood";
+import type { TurnRole } from "@shared/types/speech";
 
 export interface DialogueTurn {
   readonly id: string;
+  readonly role: TurnRole;
   readonly text: string;
   readonly turnIndex: number;
   readonly createdAt: string;
@@ -35,7 +37,6 @@ export interface DialogueSummary {
 export const useDialogueStore = defineStore("dialogue", () => {
   const currentDialogueId = ref<string | null>(null);
   const turns = ref<DialogueTurn[]>([]);
-  const isLoading = ref(false);
 
   const dialogueList = ref<DialogueSummary[]>([]);
 
@@ -83,13 +84,11 @@ export const useDialogueStore = defineStore("dialogue", () => {
     currentDialogueId.value = null;
     turns.value = [];
     dialogueList.value = [];
-    isLoading.value = false;
   }
 
   return {
     currentDialogueId,
     turns,
-    isLoading,
     dialogueList,
     currentTitle,
     setDialogue,

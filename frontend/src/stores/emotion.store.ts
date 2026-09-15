@@ -43,6 +43,18 @@ export const useEmotionStore = defineStore("emotion", () => {
     if (data.combinedEmotions) combinedEmotions.value = data.combinedEmotions;
   }
 
+  function updateFromSpeech(data: {
+    blendshapes: BlendshapeVector;
+    categories: EmotionProbabilities;
+    vad: VADValues;
+    topEmotions: readonly EmotionScore[];
+  }) {
+    currentBlendshapes.value = data.blendshapes;
+    currentProbabilities.value = data.categories;
+    currentVAD.value = data.vad;
+    topEmotions.value = data.topEmotions;
+  }
+
   function updateMood(mood: MoodState) {
     currentMood.value = mood;
   }
@@ -67,6 +79,7 @@ export const useEmotionStore = defineStore("emotion", () => {
     currentMood,
     combinedEmotions,
     updateFromAnalysis,
+    updateFromSpeech,
     updateMood,
     reset,
   };

@@ -61,7 +61,21 @@ watch(
         :key="turn.id"
         class="group rounded-lg bg-muted/50 px-3 py-2"
       >
-        <p class="text-sm">{{ turn.text }}</p>
+        <p class="text-sm">
+          <span
+            :class="[
+              'font-medium',
+              turn.role === 'assistant'
+                ? 'text-primary'
+                : 'text-muted-foreground',
+            ]"
+          >
+            {{
+              turn.role === "assistant" ? t("speech.avatar") : t("speech.you")
+            }}:
+          </span>
+          {{ turn.text }}
+        </p>
         <div class="mt-1 flex items-center gap-2">
           <span class="text-xs text-muted-foreground">
             {{ formatTime(turn.createdAt) }}

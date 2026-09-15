@@ -29,3 +29,6 @@ export const DEFAULT_EMOTION_WEIGHT = 0.7;
 export const EMOTION_WEIGHT_MIN = 0.0;
 export const EMOTION_WEIGHT_MAX = 1.0;
 export const EMOTION_WEIGHT_STEP = 0.01;
+
+export const SPEECH_SMOOTHING_ALPHA = 0.5;
+export const SPEECH_EMOTION_MOUTH_WEIGHT = 0.3;

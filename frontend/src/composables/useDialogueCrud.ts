@@ -67,6 +67,7 @@ export function useDialogueCrud() {
 
     const turns: DialogueTurn[] = data.turns.map((t) => ({
       id: t.id,
+      role: t.role,
       text: t.text,
       turnIndex: t.turnIndex,
       createdAt: String(t.createdAt),

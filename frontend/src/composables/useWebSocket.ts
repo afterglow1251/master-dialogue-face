@@ -9,13 +9,21 @@ import { useAuth } from "@clerk/vue";
 import { useEmotionStore } from "@/stores/emotion.store";
 import { useDialogueStore } from "@/stores/dialogue.store";
 import { useSettingsStore } from "@/stores/settings.store";
-import type { WsClientMessage } from "@shared/types/websocket";
+import { useConversationStore } from "@/stores/conversation.store";
+import type {
+  WsBlendshapeResult,
+  WsClientMessage,
+} from "@shared/types/websocket";
 import { isWsServerMessage } from "@/types/websocket";
 import { env } from "@/utils/env";
+
+const MAX_TITLE_LENGTH = 50;
 
 export function useAppWebSocket() {
   const emotionStore = useEmotionStore();
   const dialogueStore = useDialogueStore();
+  const conversationStore = useConversationStore();
+  const settingsStore = useSettingsStore();
   const { getToken } = useAuth();
 
   const token = ref<string | undefined>();
@@ -25,7 +33,6 @@ export function useAppWebSocket() {
     token.value = t ?? undefined;
   }
 
-  // Get initial token
   refreshToken();
 
   const wsUrl = computed(() => {
@@ -45,6 +52,7 @@ export function useAppWebSocket() {
     },
     onDisconnected() {
       refreshToken();
+      conversationStore.cancel();
     },
     heartbeat: {
       message: JSON.stringify({ type: "ping" }),
@@ -52,6 +60,46 @@ export function useAppWebSocket() {
       pongTimeout: 5_000,
     },
   });
+
+  function handleTurnSaved(message: WsBlendshapeResult) {
+    const isFirstTurn = dialogueStore.turns.length === 0;
+
+    dialogueStore.addTurn({
+      id: message.turnId,
+      role: message.role,
+      text: message.text,
+      turnIndex: dialogueStore.turns.length,
+      createdAt: new Date().toISOString(),
+      emotions: message.emotions,
+      mood: message.mood,
+      combinedEmotions: message.combinedEmotions,
+      blendshapes: message.blendshapes,
+      processingTimeMs: message.processingTimeMs,
+    });
+
+    emotionStore.updateMood(message.mood);
+
+    if (message.role === "user" && conversationStore.phase === "thinking") {
+      emotionStore.updateFromAnalysis({
+        blendshapes: message.blendshapes,
+        categories: message.emotions.categories,
+        vad: message.emotions.vad,
+        topEmotions: message.emotions.topEmotions,
+        processingTimeMs: message.processingTimeMs,
+        mood: message.mood,
+        combinedEmotions: message.combinedEmotions,
+      });
+    }
+
+    const dialogueId = dialogueStore.currentDialogueId;
+    if (isFirstTurn && message.role === "user" && dialogueId) {
+      const autoTitle =
+        message.text.length > MAX_TITLE_LENGTH
+          ? message.text.slice(0, MAX_TITLE_LENGTH) + "…"
+          : message.text;
+      dialogueStore.updateDialogueTitle(dialogueId, autoTitle);
+    }
+  }
 
   watch(data, (raw) => {
     if (!raw) return;
@@ -66,42 +114,17 @@ export function useAppWebSocket() {
     if (!isWsServerMessage(parsed)) return;
 
     switch (parsed.type) {
-      case "blendshape_update": {
-        const isFirstTurn = dialogueStore.turns.length === 0;
-        emotionStore.updateFromAnalysis({
-          blendshapes: parsed.blendshapes,
-          categories: parsed.emotions.categories,
-          vad: parsed.emotions.vad,
-          topEmotions: parsed.emotions.topEmotions,
-          processingTimeMs: parsed.processingTimeMs,
-          mood: parsed.mood,
-          combinedEmotions: parsed.combinedEmotions,
-        });
-        dialogueStore.addTurn({
-          id: parsed.turnId,
-          text: parsed.text,
-          turnIndex: dialogueStore.turns.length,
-          createdAt: new Date().toISOString(),
-          emotions: parsed.emotions,
-          mood: parsed.mood,
-          combinedEmotions: parsed.combinedEmotions,
-          blendshapes: parsed.blendshapes,
-          processingTimeMs: parsed.processingTimeMs,
-        });
-        if (isFirstTurn) {
-          const MAX_TITLE_LENGTH = 50;
-          const autoTitle =
-            parsed.text.length > MAX_TITLE_LENGTH
-              ? parsed.text.slice(0, MAX_TITLE_LENGTH) + "…"
-              : parsed.text;
-          dialogueStore.updateDialogueTitle(
-            dialogueStore.currentDialogueId!,
-            autoTitle,
-          );
-        }
-        dialogueStore.isLoading = false;
+      case "blendshape_update":
+        handleTurnSaved(parsed);
         break;
-      }
+
+      case "speech_chunk":
+        conversationStore.receiveChunk(parsed);
+        break;
+
+      case "reply_end":
+        conversationStore.endReply(parsed.requestId);
+        break;
 
       case "mood_state":
         emotionStore.updateMood(parsed.mood);
@@ -110,11 +133,16 @@ export function useAppWebSocket() {
 
       case "error":
         console.error(`WebSocket error [${parsed.code}]:`, parsed.message);
-        dialogueStore.isLoading = false;
+        conversationStore.fail(parsed.message);
         break;
 
       case "pong":
         break;
+
+      default: {
+        const unhandled: never = parsed;
+        return unhandled;
+      }
     }
   });
 
@@ -122,16 +150,24 @@ export function useAppWebSocket() {
     send(JSON.stringify(message));
   }
 
-  function analyzeText(text: string) {
+  function sendChat(text: string) {
     const dialogueId = dialogueStore.currentDialogueId;
     if (!dialogueId) return;
 
-    dialogueStore.isLoading = true;
+    const requestId = crypto.randomUUID();
+    conversationStore.startRequest(requestId, text);
     sendMessage({
-      type: "analyze",
+      type: "chat",
+      requestId,
       dialogueId,
       text,
+      language: settingsStore.locale,
     });
+  }
+
+  function cancelChat() {
+    conversationStore.cancel();
+    sendMessage({ type: "chat_cancel" });
   }
 
   function resetMood() {
@@ -144,8 +180,6 @@ export function useAppWebSocket() {
     });
   }
 
-  // Sync settings to backend when they change
-  const settingsStore = useSettingsStore();
   const {
     contextWindowSize,
     expressionIntensity,
@@ -180,7 +214,8 @@ export function useAppWebSocket() {
   return {
     status,
     sendMessage,
-    analyzeText,
+    sendChat,
+    cancelChat,
     resetMood,
     open,
     close,
