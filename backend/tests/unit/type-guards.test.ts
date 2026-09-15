@@ -7,18 +7,14 @@ import {
 import { EMOTION_LABELS } from "../../src/types/index.ts";
 
 describe("isEmotionLabel", () => {
-  test("accepts all 27 GoEmotions labels", () => {
+  test("accepts all 28 GoEmotions labels", () => {
     for (const label of EMOTION_LABELS) {
       expect(isEmotionLabel(label)).toBe(true);
     }
   });
 
-  test("has exactly 27 labels", () => {
-    expect(EMOTION_LABELS.length).toBe(27);
-  });
-
-  test("rejects neutral", () => {
-    expect(isEmotionLabel("neutral")).toBe(false);
+  test("has exactly 28 labels", () => {
+    expect(EMOTION_LABELS.length).toBe(28);
   });
 
   test("rejects unknown string", () => {

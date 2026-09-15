@@ -44,12 +44,11 @@ describe("normalizeProbabilities", () => {
     expect(result.joy / result.sadness).toBeCloseTo(2.0);
   });
 
-  test("all zeros gives uniform distribution", () => {
+  test("all zeros gives a pure neutral distribution", () => {
     const result = normalizeProbabilities(makeProbs({}));
-    const values = Object.values(result);
-    const expected = 1 / EMOTION_LABELS.length;
-    for (const v of values) {
-      expect(v).toBeCloseTo(expected);
+    expect(result.neutral).toBeCloseTo(1.0);
+    for (const label of EMOTION_LABELS) {
+      if (label !== "neutral") expect(result[label]).toBeCloseTo(0.0);
     }
   });
 

@@ -2,23 +2,19 @@ import { InferenceClient } from "@huggingface/inference";
 
 import { config } from "../config.ts";
 import { EMOTION_LABELS, type EmotionAnalysisResult } from "../types/index.ts";
-import {
-  buildModelInput,
-  toEmotionProbabilities,
-} from "../utils/emotion-scores.ts";
+import { toEmotionProbabilities } from "../utils/emotion-scores.ts";
 import {
   categoriesToVAD,
   extractTopEmotions,
 } from "./emotional-state.service.ts";
 
 const HF_PROVIDER = "hf-inference";
-const MODEL_LABEL_COUNT = EMOTION_LABELS.length + 1;
+const MODEL_LABEL_COUNT = EMOTION_LABELS.length;
 
 const client = new InferenceClient(config.emotion.hfToken);
 
 export async function analyzeEmotions(
   text: string,
-  context: readonly string[],
   signal?: AbortSignal,
 ): Promise<EmotionAnalysisResult> {
   const startedAt = performance.now();
@@ -28,7 +24,7 @@ export async function analyzeEmotions(
     {
       model: config.emotion.model,
       provider: HF_PROVIDER,
-      inputs: buildModelInput(text, context),
+      inputs: text,
       parameters: {
         function_to_apply: "sigmoid",
         top_k: MODEL_LABEL_COUNT,

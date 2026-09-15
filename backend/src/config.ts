@@ -45,13 +45,9 @@ export const config = {
     timeoutMs: Number(Bun.env.ELEVENLABS_TIMEOUT_MS ?? "20000"),
   },
   ws: {
-    defaultContextWindowSize: Number(
-      Bun.env.WS_DEFAULT_CONTEXT_WINDOW_SIZE ?? "3",
-    ),
     defaultExpressionIntensity: Number(
       Bun.env.WS_DEFAULT_EXPRESSION_INTENSITY ?? "1.0",
     ),
-    maxContextWindowSize: Number(Bun.env.WS_MAX_CONTEXT_WINDOW_SIZE ?? "10"),
     maxExpressionIntensity: Number(
       Bun.env.WS_MAX_EXPRESSION_INTENSITY ?? "2.0",
     ),

@@ -7,16 +7,21 @@ import type {
   WsServerMessage,
   WsSpeechChunk,
 } from "@shared/types/websocket.ts";
-import type { DialogueId, SpeechLanguage, TurnRole } from "../types/index.ts";
+import type {
+  DialogueId,
+  EmotionProbabilities,
+  SpeechLanguage,
+  TurnRole,
+} from "../types/index.ts";
 import type { SentenceEvent } from "../utils/reply-format.ts";
 import { mapEmotionsToBlendshapes } from "./blendshape-mapper.ts";
 import * as dialogueService from "./dialogue.service.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
+import * as emotionalState from "./emotional-state.service.ts";
 import { LlmRefusalError, streamReply } from "./llm.service.ts";
 import { TtsError, synthesizeSpeech } from "./tts.service.ts";
 
 export interface ConversationSettings {
-  readonly contextWindowSize: number;
   readonly expressionIntensity: number;
   readonly moodReactivity: number;
   readonly moodDecaySeconds: number;
@@ -74,24 +79,28 @@ async function prepareSpeechChunk(params: {
   readonly index: number;
   readonly sentence: SentenceEvent;
   readonly previousText: string;
-  readonly context: readonly string[];
   readonly language: SpeechLanguage;
   readonly expressionIntensity: number;
+  readonly emotionWeight: number;
+  readonly moodCategories: Promise<EmotionProbabilities>;
   readonly signal: AbortSignal;
 }): Promise<WsSpeechChunk> {
-  const [speech, analysis] = await Promise.all([
+  const [speech, analysis, moodCategories] = await Promise.all([
     synthesizeSpeech({
       text: params.sentence.text,
       language: params.language,
       previousText: params.previousText,
       signal: params.signal,
     }),
-    analyzeEmotions(
-      params.sentence.analysisText,
-      params.context,
-      params.signal,
-    ),
+    analyzeEmotions(params.sentence.analysisText, params.signal),
+    params.moodCategories,
   ]);
+
+  const combinedCategories = emotionalState.combineEmotionAndMood(
+    analysis.emotions.categories,
+    moodCategories,
+    params.emotionWeight,
+  );
 
   return {
     type: "speech_chunk",
@@ -106,7 +115,7 @@ async function prepareSpeechChunk(params: {
       topEmotions: analysis.emotions.top_emotions,
     },
     blendshapes: mapEmotionsToBlendshapes(
-      analysis.emotions.categories,
+      combinedCategories,
       params.expressionIntensity,
     ),
   };
@@ -159,6 +168,14 @@ export async function runConversationTurn(params: {
     });
   }
 
+  let moodCategories: Promise<EmotionProbabilities> | null = null;
+  function currentMoodCategories(): Promise<EmotionProbabilities> {
+    moodCategories ??= Promise.resolve(userTurn).then(() =>
+      emotionalState.getMoodCategories(params.dialogueId),
+    );
+    return moodCategories;
+  }
+
   const sentences: SentenceEvent[] = [];
   let delivery: Promise<void> = Promise.resolve();
 
@@ -180,11 +197,10 @@ export async function runConversationTurn(params: {
           index: sentences.length,
           sentence: event,
           previousText: sentences.map((s) => s.text).join(" "),
-          context: sentences
-            .slice(-params.settings.contextWindowSize)
-            .map((s) => s.analysisText),
           language: params.language,
           expressionIntensity: params.settings.expressionIntensity,
+          emotionWeight: params.settings.emotionWeight,
+          moodCategories: currentMoodCategories(),
           signal,
         }),
       );

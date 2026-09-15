@@ -25,7 +25,6 @@ interface WsSettingsUpdateMessage {
   readonly type: "settings_update";
   readonly settings: {
     readonly smoothingAlpha?: number;
-    readonly contextWindowSize?: number;
     readonly expressionIntensity?: number;
     readonly moodReactivity?: number;
     readonly moodDecaySeconds?: number;

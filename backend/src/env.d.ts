@@ -29,9 +29,7 @@ declare module "bun" {
     readonly ELEVENLABS_TIMEOUT_MS: string;
 
     // WebSocket
-    readonly WS_DEFAULT_CONTEXT_WINDOW_SIZE: string;
     readonly WS_DEFAULT_EXPRESSION_INTENSITY: string;
-    readonly WS_MAX_CONTEXT_WINDOW_SIZE: string;
     readonly WS_MAX_EXPRESSION_INTENSITY: string;
     readonly WS_MAX_CHAT_TEXT_LENGTH: string;
   }

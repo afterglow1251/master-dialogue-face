@@ -19,6 +19,7 @@ export const EMOTION_LABELS = [
   "joy",
   "love",
   "nervousness",
+  "neutral",
   "optimism",
   "pride",
   "realization",

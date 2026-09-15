@@ -1,15 +1,5 @@
 import { isEmotionLabel, type EmotionProbabilities } from "../types/index.ts";
 
-const CONTEXT_SEPARATOR = " </s> ";
-
-export function buildModelInput(
-  text: string,
-  context: readonly string[],
-): string {
-  if (context.length === 0) return text;
-  return [text, ...context].join(CONTEXT_SEPARATOR);
-}
-
 export function toEmotionProbabilities(
   scores: readonly { readonly label: string; readonly score: number }[],
 ): EmotionProbabilities {
@@ -42,6 +32,7 @@ function createEmptyProbabilities(): EmotionProbabilities {
     joy: 0,
     love: 0,
     nervousness: 0,
+    neutral: 0,
     optimism: 0,
     pride: 0,
     realization: 0,

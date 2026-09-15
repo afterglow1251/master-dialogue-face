@@ -7,8 +7,9 @@
  *   3. Combined State (drives blendshape mapping) — this service
  *
  * Mood update formula:
- *   Mood(t) = β × E_vad(t) + (1-β) × [N + (Mood(t-1) - N) × e^(-Δt/τ)]
- *   where N = NEUTRAL_VAD, β = reactivity, τ = decay time constant
+ *   Mood(t) = β_eff × E_vad(t) + (1-β_eff) × [N + (Mood(t-1) - N) × e^(-Δt/τ)]
+ *   where N = NEUTRAL_VAD, τ = decay time constant and
+ *   β_eff = β × (1 - p_neutral) scales reactivity down for neutral utterances
  *
  * Combined state formula:
  *   S(t) = w_e × EmotionCategories(t) + (1-w_e) × MoodCategories(t)
@@ -73,11 +74,11 @@ export function updateMoodVAD(params: {
 /**
  * Converts a VAD point to emotion category weights via inverse-distance weighting.
  *
- * weight_i = 1 / (distance_i + ε)²
+ * weight_i = 1 / (distance_i² + σ²)
  * Normalized so weights sum to 1.
  */
 export function vadToEmotionWeights(moodVAD: VADValues): EmotionProbabilities {
-  const EPSILON = 0.001;
+  const KERNEL_SIGMA = 0.1;
 
   const weights = new Map<EmotionLabel, number>();
   let weightSum = 0;
@@ -86,8 +87,8 @@ export function vadToEmotionWeights(moodVAD: VADValues): EmotionProbabilities {
     const dv = moodVAD.valence - centroid.valence;
     const da = moodVAD.arousal - centroid.arousal;
     const dd = moodVAD.dominance - centroid.dominance;
-    const distance = Math.sqrt(dv * dv + da * da + dd * dd);
-    const w = 1 / ((distance + EPSILON) * (distance + EPSILON));
+    const squaredDistance = dv * dv + da * da + dd * dd;
+    const w = 1 / (squaredDistance + KERNEL_SIGMA * KERNEL_SIGMA);
     weights.set(emotion, w);
     weightSum += w;
   }
@@ -130,6 +131,19 @@ export function combineEmotionAndMood(
   }
 
   return result as EmotionProbabilities;
+}
+
+/**
+ * Scales mood reactivity by how non-neutral the utterance is.
+ *
+ * β_eff = β × (1 - p_neutral)
+ */
+export function effectiveReactivity(
+  beta: number,
+  neutralProbability: number,
+): number {
+  const clamped = Math.min(1, Math.max(0, neutralProbability));
+  return beta * (1 - clamped);
 }
 
 /** Extracts top-N emotions sorted by probability descending. */
@@ -247,6 +261,19 @@ export interface EmotionalStateResult {
   readonly combinedEmotions: CombinedEmotionalState;
 }
 
+export async function getMoodCategories(
+  dialogueId: DialogueId,
+): Promise<EmotionProbabilities> {
+  const existing = await loadMoodState(dialogueId);
+  if (!existing) return vadToEmotionWeights(NEUTRAL_VAD);
+
+  return vadToEmotionWeights({
+    valence: existing.moodValence,
+    arousal: existing.moodArousal,
+    dominance: existing.moodDominance,
+  });
+}
+
 export async function processEmotionalState(params: {
   readonly dialogueId: DialogueId;
   readonly emotionVAD: VADValues;
@@ -254,6 +281,7 @@ export async function processEmotionalState(params: {
   readonly moodReactivity: number;
   readonly moodDecaySeconds: number;
   readonly emotionWeight: number;
+  readonly updateMood: boolean;
 }): Promise<EmotionalStateResult> {
   const {
     dialogueId,
@@ -262,6 +290,7 @@ export async function processEmotionalState(params: {
     moodReactivity,
     moodDecaySeconds,
     emotionWeight,
+    updateMood,
   } = params;
 
   const existing = await loadMoodState(dialogueId);
@@ -277,17 +306,24 @@ export async function processEmotionalState(params: {
   const deltaSeconds = existing
     ? (now.getTime() - existing.lastUpdatedAt.getTime()) / 1000
     : 0;
-  const turnCount = (existing?.turnCount ?? 0) + 1;
 
-  const updatedMoodVAD = updateMoodVAD({
-    previousMood,
-    currentEmotionVAD: emotionVAD,
-    deltaSeconds,
-    beta: moodReactivity,
-    tau: moodDecaySeconds,
-  });
+  const turnCount = updateMood
+    ? (existing?.turnCount ?? 0) + 1
+    : (existing?.turnCount ?? 0);
 
-  await saveMoodState(dialogueId, updatedMoodVAD, turnCount);
+  const updatedMoodVAD = updateMood
+    ? updateMoodVAD({
+        previousMood,
+        currentEmotionVAD: emotionVAD,
+        deltaSeconds,
+        beta: effectiveReactivity(moodReactivity, emotionCategories["neutral"]),
+        tau: moodDecaySeconds,
+      })
+    : previousMood;
+
+  if (updateMood) {
+    await saveMoodState(dialogueId, updatedMoodVAD, turnCount);
+  }
 
   const moodCategories = vadToEmotionWeights(updatedMoodVAD);
   const moodTopEmotions = extractTopEmotions(moodCategories);

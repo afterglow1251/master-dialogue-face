@@ -87,23 +87,6 @@ export async function deleteDialogue(dialogueId: DialogueId) {
   return db.delete(dialogues).where(eq(dialogues.id, dialogueId));
 }
 
-export async function getContextTurns(
-  dialogueId: DialogueId,
-  contextSize: number,
-): Promise<readonly string[]> {
-  const rows = await db
-    .select({
-      text: dialogueTurns.text,
-      analysisText: dialogueTurns.analysisText,
-    })
-    .from(dialogueTurns)
-    .where(eq(dialogueTurns.dialogueId, dialogueId))
-    .orderBy(desc(dialogueTurns.turnIndex))
-    .limit(contextSize);
-
-  return rows.reverse().map((r) => r.analysisText ?? r.text);
-}
-
 export async function getRecentTurns(
   dialogueId: DialogueId,
   limit: number,
@@ -161,18 +144,12 @@ export async function analyzeAndSaveTurn(params: {
   role: TurnRole;
   text: string;
   analysisText: string;
-  contextWindowSize: number;
   expressionIntensity?: number;
   moodReactivity: number;
   moodDecaySeconds: number;
   emotionWeight: number;
 }): Promise<AnalyzeTurnResult> {
-  const contextRows = await getContextTurns(
-    params.dialogueId,
-    params.contextWindowSize,
-  );
-
-  const analysis = await analyzeEmotions(params.analysisText, contextRows);
+  const analysis = await analyzeEmotions(params.analysisText);
 
   const { mood, combinedEmotions } = await emotionalState.processEmotionalState(
     {
@@ -182,6 +159,7 @@ export async function analyzeAndSaveTurn(params: {
       moodReactivity: params.moodReactivity,
       moodDecaySeconds: params.moodDecaySeconds,
       emotionWeight: params.emotionWeight,
+      updateMood: params.role !== "assistant",
     },
   );
 

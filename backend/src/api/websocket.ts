@@ -55,7 +55,6 @@ function isWsClientMessage(data: unknown): data is WsClientMessage {
 
 interface SessionState {
   userId: string;
-  contextWindowSize: number;
   expressionIntensity: number;
   moodReactivity: number;
   moodDecaySeconds: number;
@@ -70,7 +69,6 @@ function getSession(wsId: string, userId: string): SessionState {
   if (!session) {
     session = {
       userId,
-      contextWindowSize: config.ws.defaultContextWindowSize,
       expressionIntensity: config.ws.defaultExpressionIntensity,
       moodReactivity: config.mood.defaultReactivity,
       moodDecaySeconds: config.mood.defaultDecaySeconds,
@@ -166,12 +164,6 @@ export const wsRoutes = new Elysia()
 
         case "settings_update": {
           const session = getSession(ws.id, wsUserId);
-          if (parsed.settings.contextWindowSize !== undefined) {
-            session.contextWindowSize = Math.min(
-              Math.max(1, Math.floor(parsed.settings.contextWindowSize)),
-              config.ws.maxContextWindowSize,
-            );
-          }
           if (parsed.settings.expressionIntensity !== undefined) {
             session.expressionIntensity = Math.min(
               Math.max(0.0, parsed.settings.expressionIntensity),
@@ -264,7 +256,6 @@ export const wsRoutes = new Elysia()
               text,
               language: parsed.language,
               settings: {
-                contextWindowSize: session.contextWindowSize,
                 expressionIntensity: session.expressionIntensity,
                 moodReactivity: session.moodReactivity,
                 moodDecaySeconds: session.moodDecaySeconds,

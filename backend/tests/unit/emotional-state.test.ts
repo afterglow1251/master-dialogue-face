@@ -4,6 +4,7 @@ import {
   computeDecay,
   updateMoodVAD,
   vadToEmotionWeights,
+  effectiveReactivity,
   combineEmotionAndMood,
   extractTopEmotions,
   categoriesToVAD,
@@ -186,10 +187,10 @@ describe("updateMoodVAD", () => {
 // ── vadToEmotionWeights ──
 
 describe("vadToEmotionWeights", () => {
-  test("returns all 27 emotion keys", () => {
+  test("returns all 28 emotion keys", () => {
     const result = vadToEmotionWeights(NEUTRAL_VAD);
     const keys = Object.keys(result);
-    expect(keys.length).toBe(27);
+    expect(keys.length).toBe(28);
     for (const label of EMOTION_LABELS) {
       expect(label in result).toBe(true);
     }
@@ -246,6 +247,27 @@ describe("vadToEmotionWeights", () => {
   });
 });
 
+// ── effectiveReactivity ──
+
+describe("effectiveReactivity", () => {
+  test("returns beta unchanged when the utterance is not neutral", () => {
+    expect(effectiveReactivity(0.3, 0)).toBeCloseTo(0.3);
+  });
+
+  test("returns 0 when the utterance is fully neutral", () => {
+    expect(effectiveReactivity(0.3, 1)).toBeCloseTo(0);
+  });
+
+  test("scales linearly with the neutral probability", () => {
+    expect(effectiveReactivity(0.4, 0.25)).toBeCloseTo(0.3);
+  });
+
+  test("clamps the neutral probability to [0, 1]", () => {
+    expect(effectiveReactivity(0.5, -2)).toBeCloseTo(0.5);
+    expect(effectiveReactivity(0.5, 3)).toBeCloseTo(0);
+  });
+});
+
 // ── combineEmotionAndMood ──
 
 describe("combineEmotionAndMood", () => {
@@ -283,9 +305,9 @@ describe("combineEmotionAndMood", () => {
     }
   });
 
-  test("result has all 27 keys", () => {
+  test("result has all 28 keys", () => {
     const result = combineEmotionAndMood(emotionDist, moodDist, 0.5);
-    expect(Object.keys(result).length).toBe(27);
+    expect(Object.keys(result).length).toBe(28);
   });
 });
 
@@ -334,9 +356,9 @@ describe("extractTopEmotions", () => {
     }
   });
 
-  test("n larger than 27 returns all 27", () => {
+  test("n larger than 28 returns all 28", () => {
     const result = extractTopEmotions(probs, 100);
-    expect(result.length).toBe(27);
+    expect(result.length).toBe(28);
   });
 
   test("all-zero probabilities returns 5 entries with probability 0", () => {
@@ -368,7 +390,7 @@ describe("categoriesToVAD", () => {
     expect(result.dominance).toBeCloseTo(NEUTRAL_VAD.dominance);
   });
 
-  test("equal weights across all 27 gives mean of all centroids", () => {
+  test("equal weights across all 28 gives mean of all centroids", () => {
     const equal = makeProbs(
       Object.fromEntries(EMOTION_LABELS.map((l) => [l, 1.0])),
     );
@@ -382,9 +404,9 @@ describe("categoriesToVAD", () => {
       aSum += c.arousal;
       dSum += c.dominance;
     }
-    expect(result.valence).toBeCloseTo(vSum / 27);
-    expect(result.arousal).toBeCloseTo(aSum / 27);
-    expect(result.dominance).toBeCloseTo(dSum / 27);
+    expect(result.valence).toBeCloseTo(vSum / 28);
+    expect(result.arousal).toBeCloseTo(aSum / 28);
+    expect(result.dominance).toBeCloseTo(dSum / 28);
   });
 
   test("dominant emotion pulls result toward its centroid", () => {

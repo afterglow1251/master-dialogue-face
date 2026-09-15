@@ -1,11 +1,15 @@
 /**
- * VAD (Valence–Arousal–Dominance) reference centroids for 27 GoEmotions categories.
+ * VAD (Valence–Arousal–Dominance) reference centroids for 28 GoEmotions categories.
  * Source: NRC Valence, Arousal, and Dominance (VAD) Lexicon v1
  * Author: Saif M. Mohammad (2018)
  * Scale: 0.0 – 1.0
  */
 
-import type { EmotionLabel, VADValues } from "../types/index.ts";
+import {
+  NEUTRAL_VAD,
+  type EmotionLabel,
+  type VADValues,
+} from "../types/index.ts";
 
 export const EMOTION_VAD_CENTROIDS: ReadonlyMap<
   EmotionLabel,
@@ -31,6 +35,7 @@ export const EMOTION_VAD_CENTROIDS: ReadonlyMap<
   ["joy", { valence: 0.98, arousal: 0.824, dominance: 0.794 }],
   ["love", { valence: 1.0, arousal: 0.519, dominance: 0.673 }],
   ["nervousness", { valence: 0.163, arousal: 0.915, dominance: 0.241 }],
+  ["neutral", NEUTRAL_VAD],
   ["optimism", { valence: 0.949, arousal: 0.565, dominance: 0.814 }],
   ["pride", { valence: 0.729, arousal: 0.634, dominance: 0.848 }],
   ["realization", { valence: 0.554, arousal: 0.51, dominance: 0.836 }],

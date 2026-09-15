@@ -25,11 +25,7 @@ describe("config", () => {
   });
 
   test("ws defaults are valid", () => {
-    expect(config.ws.defaultContextWindowSize).toBeGreaterThanOrEqual(1);
     expect(config.ws.defaultExpressionIntensity).toBeGreaterThanOrEqual(0);
-    expect(config.ws.maxContextWindowSize).toBeGreaterThanOrEqual(
-      config.ws.defaultContextWindowSize,
-    );
     expect(config.ws.maxExpressionIntensity).toBeGreaterThan(0);
   });
 
