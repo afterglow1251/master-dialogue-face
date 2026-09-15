@@ -10,9 +10,12 @@ export {
 // Re-export shared types so backend code keeps importing from "@/types"
 export {
   ARKIT_BLENDSHAPES,
+  EXPRESSION_MODES,
   createEmptyBlendshapeVector,
+  isExpressionMode,
   type ArkitBlendshapeName,
   type BlendshapeVector,
+  type ExpressionMode,
 } from "@shared/types/blendshape.ts";
 
 export {

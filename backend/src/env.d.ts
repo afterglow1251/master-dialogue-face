@@ -32,5 +32,8 @@ declare module "bun" {
     readonly WS_DEFAULT_EXPRESSION_INTENSITY: string;
     readonly WS_MAX_EXPRESSION_INTENSITY: string;
     readonly WS_MAX_CHAT_TEXT_LENGTH: string;
+
+    // Expression composition ("linear" | "facs")
+    readonly EXPRESSION_MODE: string;
   }
 }

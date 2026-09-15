@@ -2,7 +2,8 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.ts";
 import { dialogues, dialogueTurns } from "../db/schema.ts";
-import { mapEmotionsToBlendshapes } from "./blendshape-mapper.ts";
+import { mapEmotions } from "./blendshape-mapper.ts";
+import { asymmetrySeedFromId } from "./expression-composer.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
 import type { HistoryTurn } from "./llm.service.ts";
@@ -13,6 +14,7 @@ import type {
   DialogueId,
   EmotionAnalysisResult,
   EmotionProbabilities,
+  ExpressionMode,
   MoodState,
   TurnRole,
   UserId,
@@ -145,6 +147,7 @@ export async function analyzeAndSaveTurn(params: {
   text: string;
   analysisText: string;
   expressionIntensity?: number;
+  expressionMode: ExpressionMode;
   moodReactivity: number;
   moodDecaySeconds: number;
   emotionWeight: number;
@@ -163,10 +166,11 @@ export async function analyzeAndSaveTurn(params: {
     },
   );
 
-  const blendshapes = mapEmotionsToBlendshapes(
-    combinedEmotions.categories,
-    params.expressionIntensity,
-  );
+  const blendshapes = mapEmotions(combinedEmotions.categories, {
+    mode: params.expressionMode,
+    intensityMultiplier: params.expressionIntensity,
+    asymmetrySeed: asymmetrySeedFromId(params.dialogueId),
+  });
 
   const turnIndex = await getNextTurnIndex(params.dialogueId);
 

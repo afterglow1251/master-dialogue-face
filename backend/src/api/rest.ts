@@ -136,6 +136,7 @@ const protectedRoutes = new Elysia({ prefix: "/api/v1" })
           role: "user",
           text: body.text,
           analysisText: body.text,
+          expressionMode: config.expression.defaultMode,
           moodReactivity: config.mood.defaultReactivity,
           moodDecaySeconds: config.mood.defaultDecaySeconds,
           emotionWeight: config.mood.defaultEmotionWeight,

@@ -10,11 +10,13 @@ import type {
 import type {
   DialogueId,
   EmotionProbabilities,
+  ExpressionMode,
   SpeechLanguage,
   TurnRole,
 } from "../types/index.ts";
 import type { SentenceEvent } from "../utils/reply-format.ts";
-import { mapEmotionsToBlendshapes } from "./blendshape-mapper.ts";
+import { mapEmotions } from "./blendshape-mapper.ts";
+import { asymmetrySeedFromId } from "./expression-composer.ts";
 import * as dialogueService from "./dialogue.service.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
@@ -23,6 +25,7 @@ import { TtsError, synthesizeSpeech } from "./tts.service.ts";
 
 export interface ConversationSettings {
   readonly expressionIntensity: number;
+  readonly expressionMode: ExpressionMode;
   readonly moodReactivity: number;
   readonly moodDecaySeconds: number;
   readonly emotionWeight: number;
@@ -76,11 +79,13 @@ async function saveTurn(params: {
 
 async function prepareSpeechChunk(params: {
   readonly requestId: string;
+  readonly dialogueId: DialogueId;
   readonly index: number;
   readonly sentence: SentenceEvent;
   readonly previousText: string;
   readonly language: SpeechLanguage;
   readonly expressionIntensity: number;
+  readonly expressionMode: ExpressionMode;
   readonly emotionWeight: number;
   readonly moodCategories: Promise<EmotionProbabilities>;
   readonly signal: AbortSignal;
@@ -114,10 +119,11 @@ async function prepareSpeechChunk(params: {
       vad: analysis.emotions.vad,
       topEmotions: analysis.emotions.top_emotions,
     },
-    blendshapes: mapEmotionsToBlendshapes(
-      combinedCategories,
-      params.expressionIntensity,
-    ),
+    blendshapes: mapEmotions(combinedCategories, {
+      mode: params.expressionMode,
+      intensityMultiplier: params.expressionIntensity,
+      asymmetrySeed: asymmetrySeedFromId(params.dialogueId),
+    }),
   };
 }
 
@@ -194,11 +200,13 @@ export async function runConversationTurn(params: {
       const prepared = settle(
         prepareSpeechChunk({
           requestId: params.requestId,
+          dialogueId: params.dialogueId,
           index: sentences.length,
           sentence: event,
           previousText: sentences.map((s) => s.text).join(" "),
           language: params.language,
           expressionIntensity: params.settings.expressionIntensity,
+          expressionMode: params.settings.expressionMode,
           emotionWeight: params.settings.emotionWeight,
           moodCategories: currentMoodCategories(),
           signal,

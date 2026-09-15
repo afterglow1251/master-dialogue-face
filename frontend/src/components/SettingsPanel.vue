@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings.store";
+import type { ExpressionMode } from "@shared/types/blendshape";
 import {
   DEFAULT_EXPRESSION_INTENSITY,
   DEFAULT_SMOOTHING_ALPHA,
@@ -37,10 +38,15 @@ const settingsStore = useSettingsStore();
 const {
   smoothingAlpha,
   expressionIntensity,
+  expressionMode,
   moodReactivity,
   moodDecaySeconds,
   emotionWeight,
 } = storeToRefs(settingsStore);
+
+function selectExpressionMode(mode: ExpressionMode) {
+  expressionMode.value = mode;
+}
 
 function formatDecayTime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -93,6 +99,32 @@ function formatDecayTime(seconds: number): string {
             (expressionIntensity = v?.[0] ?? DEFAULT_EXPRESSION_INTENSITY)
         "
       />
+    </div>
+
+    <Separator />
+
+    <div class="space-y-3">
+      <label class="text-sm font-medium">{{
+        t("tuning.expressionMode")
+      }}</label>
+      <div class="flex gap-2">
+        <Button
+          :variant="expressionMode === 'linear' ? 'default' : 'outline'"
+          size="sm"
+          class="flex-1"
+          @click="selectExpressionMode('linear')"
+        >
+          {{ t("tuning.expressionModeLinear") }}
+        </Button>
+        <Button
+          :variant="expressionMode === 'facs' ? 'default' : 'outline'"
+          size="sm"
+          class="flex-1"
+          @click="selectExpressionMode('facs')"
+        >
+          {{ t("tuning.expressionModeFacs") }}
+        </Button>
+      </div>
     </div>
 
     <Separator />

@@ -1,4 +1,4 @@
-import type { BlendshapeVector } from "./blendshape.ts";
+import type { BlendshapeVector, ExpressionMode } from "./blendshape.ts";
 import type {
   EmotionProbabilities,
   EmotionScore,
@@ -26,6 +26,7 @@ interface WsSettingsUpdateMessage {
   readonly settings: {
     readonly smoothingAlpha?: number;
     readonly expressionIntensity?: number;
+    readonly expressionMode?: ExpressionMode;
     readonly moodReactivity?: number;
     readonly moodDecaySeconds?: number;
     readonly emotionWeight?: number;

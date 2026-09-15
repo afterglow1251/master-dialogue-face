@@ -187,18 +187,26 @@ export function useAppWebSocket() {
 
   const {
     expressionIntensity,
+    expressionMode,
     moodReactivity,
     moodDecaySeconds,
     emotionWeight,
   } = storeToRefs(settingsStore);
 
   watchDebounced(
-    [expressionIntensity, moodReactivity, moodDecaySeconds, emotionWeight],
+    [
+      expressionIntensity,
+      expressionMode,
+      moodReactivity,
+      moodDecaySeconds,
+      emotionWeight,
+    ],
     () => {
       sendMessage({
         type: "settings_update",
         settings: {
           expressionIntensity: expressionIntensity.value,
+          expressionMode: expressionMode.value,
           moodReactivity: moodReactivity.value,
           moodDecaySeconds: moodDecaySeconds.value,
           emotionWeight: emotionWeight.value,

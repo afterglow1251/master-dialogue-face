@@ -3,8 +3,10 @@ import { useLocalStorage } from "@vueuse/core";
 import { watchEffect, watch } from "vue";
 
 import { i18n, type Locale } from "@/lib/i18n";
+import type { ExpressionMode } from "@shared/types/blendshape";
 import {
   DEFAULT_EXPRESSION_INTENSITY,
+  DEFAULT_EXPRESSION_MODE,
   DEFAULT_SMOOTHING_ALPHA,
   DEFAULT_MOOD_REACTIVITY,
   DEFAULT_MOOD_DECAY_SECONDS,
@@ -19,6 +21,10 @@ export const useSettingsStore = defineStore("settings", () => {
   const expressionIntensity = useLocalStorage(
     "settings:expressionIntensity",
     DEFAULT_EXPRESSION_INTENSITY,
+  );
+  const expressionMode = useLocalStorage<ExpressionMode>(
+    "settings:expressionMode",
+    DEFAULT_EXPRESSION_MODE,
   );
   const moodReactivity = useLocalStorage(
     "settings:moodReactivity",
@@ -51,6 +57,7 @@ export const useSettingsStore = defineStore("settings", () => {
   function resetDefaults() {
     smoothingAlpha.value = DEFAULT_SMOOTHING_ALPHA;
     expressionIntensity.value = DEFAULT_EXPRESSION_INTENSITY;
+    expressionMode.value = DEFAULT_EXPRESSION_MODE;
     moodReactivity.value = DEFAULT_MOOD_REACTIVITY;
     moodDecaySeconds.value = DEFAULT_MOOD_DECAY_SECONDS;
     emotionWeight.value = DEFAULT_EMOTION_WEIGHT;
@@ -59,6 +66,7 @@ export const useSettingsStore = defineStore("settings", () => {
   return {
     smoothingAlpha,
     expressionIntensity,
+    expressionMode,
     moodReactivity,
     moodDecaySeconds,
     emotionWeight,

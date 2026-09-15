@@ -11,9 +11,11 @@ import { verifyToken } from "../services/auth.ts";
 import { resolveUserIdFromClerkId } from "./auth-middleware.ts";
 import {
   createEmptyBlendshapeVector,
+  isExpressionMode,
   isSpeechLanguage,
   toDialogueId,
   toUserId,
+  type ExpressionMode,
 } from "../types/index.ts";
 import type {
   WsClientMessage,
@@ -56,6 +58,7 @@ function isWsClientMessage(data: unknown): data is WsClientMessage {
 interface SessionState {
   userId: string;
   expressionIntensity: number;
+  expressionMode: ExpressionMode;
   moodReactivity: number;
   moodDecaySeconds: number;
   emotionWeight: number;
@@ -70,6 +73,7 @@ function getSession(wsId: string, userId: string): SessionState {
     session = {
       userId,
       expressionIntensity: config.ws.defaultExpressionIntensity,
+      expressionMode: config.expression.defaultMode,
       moodReactivity: config.mood.defaultReactivity,
       moodDecaySeconds: config.mood.defaultDecaySeconds,
       emotionWeight: config.mood.defaultEmotionWeight,
@@ -170,6 +174,9 @@ export const wsRoutes = new Elysia()
               config.ws.maxExpressionIntensity,
             );
           }
+          if (isExpressionMode(parsed.settings.expressionMode)) {
+            session.expressionMode = parsed.settings.expressionMode;
+          }
           if (parsed.settings.moodReactivity !== undefined) {
             session.moodReactivity = Math.min(
               Math.max(0.01, parsed.settings.moodReactivity),
@@ -257,6 +264,7 @@ export const wsRoutes = new Elysia()
               language: parsed.language,
               settings: {
                 expressionIntensity: session.expressionIntensity,
+                expressionMode: session.expressionMode,
                 moodReactivity: session.moodReactivity,
                 moodDecaySeconds: session.moodDecaySeconds,
                 emotionWeight: session.emotionWeight,

@@ -62,3 +62,13 @@ export function createEmptyBlendshapeVector(): BlendshapeVector {
     ARKIT_BLENDSHAPES.map((name) => [name, 0]),
   ) as BlendshapeVector;
 }
+
+export const EXPRESSION_MODES = ["linear", "facs"] as const;
+
+export type ExpressionMode = (typeof EXPRESSION_MODES)[number];
+
+const EXPRESSION_MODE_NAMES: ReadonlySet<string> = new Set(EXPRESSION_MODES);
+
+export function isExpressionMode(value: unknown): value is ExpressionMode {
+  return typeof value === "string" && EXPRESSION_MODE_NAMES.has(value);
+}

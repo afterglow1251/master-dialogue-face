@@ -1,5 +1,8 @@
+import type { ExpressionMode } from "@shared/types/blendshape";
+
 export const DEFAULT_SMOOTHING_ALPHA = 0.3;
 export const DEFAULT_EXPRESSION_INTENSITY = 1.0;
+export const DEFAULT_EXPRESSION_MODE: ExpressionMode = "facs";
 
 export const SMOOTHING_ALPHA_MIN = 0.01;
 export const SMOOTHING_ALPHA_MAX = 1;

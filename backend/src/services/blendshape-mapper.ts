@@ -6,8 +6,13 @@ import {
   isEmotionLabel,
   type BlendshapeVector,
   type EmotionLabel,
+  type EmotionProbabilities,
+  type ExpressionMode,
 } from "../types/index.ts";
 import { normalizeProbabilities } from "../utils/normalization.ts";
+import { composeExpression } from "./expression-composer.ts";
+
+export type { ExpressionMode };
 
 const templateCache = new Map<EmotionLabel, BlendshapeVector>();
 
@@ -53,4 +58,36 @@ export function mapEmotionsToBlendshapes(
   }
 
   return result;
+}
+
+export interface ExpressionOptions {
+  readonly mode: ExpressionMode;
+  readonly intensityMultiplier?: number | undefined;
+  readonly asymmetrySeed?: number | undefined;
+}
+
+const DEFAULT_INTENSITY_MULTIPLIER = 1.0;
+const SYMMETRIC_SEED = 0;
+
+export function mapEmotions(
+  probabilities: EmotionProbabilities,
+  options: ExpressionOptions,
+): BlendshapeVector {
+  const intensityMultiplier =
+    options.intensityMultiplier ?? DEFAULT_INTENSITY_MULTIPLIER;
+
+  switch (options.mode) {
+    case "linear":
+      return mapEmotionsToBlendshapes(probabilities, intensityMultiplier);
+    case "facs":
+      return composeExpression(
+        probabilities,
+        intensityMultiplier,
+        options.asymmetrySeed ?? SYMMETRIC_SEED,
+      );
+    default: {
+      const unreachable: never = options.mode;
+      return unreachable;
+    }
+  }
 }

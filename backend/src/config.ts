@@ -1,3 +1,15 @@
+import {
+  isExpressionMode,
+  type ExpressionMode,
+} from "@shared/types/blendshape.ts";
+
+const DEFAULT_EXPRESSION_MODE: ExpressionMode = "facs";
+
+function readExpressionMode(): ExpressionMode {
+  const raw = Bun.env.EXPRESSION_MODE;
+  return isExpressionMode(raw) ? raw : DEFAULT_EXPRESSION_MODE;
+}
+
 const REQUIRED_VARS = [
   "DATABASE_URL",
   "CLERK_SECRET_KEY",
@@ -52,6 +64,9 @@ export const config = {
       Bun.env.WS_MAX_EXPRESSION_INTENSITY ?? "2.0",
     ),
     maxChatTextLength: Number(Bun.env.WS_MAX_CHAT_TEXT_LENGTH ?? "2000"),
+  },
+  expression: {
+    defaultMode: readExpressionMode(),
   },
   mood: {
     defaultReactivity: Number(Bun.env.MOOD_DEFAULT_REACTIVITY ?? "0.3"),
