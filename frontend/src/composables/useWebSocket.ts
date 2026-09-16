@@ -86,7 +86,7 @@ export function useAppWebSocket() {
 
     if (message.role === "user" && conversationStore.phase === "thinking") {
       emotionStore.updateFromAnalysis({
-        blendshapes: message.blendshapes,
+        blendshapesByMode: message.blendshapesByMode,
         categories: message.emotions.categories,
         vad: message.emotions.vad,
         topEmotions: message.emotions.topEmotions,
@@ -133,7 +133,7 @@ export function useAppWebSocket() {
 
       case "mood_state":
         emotionStore.updateMood(parsed.mood);
-        emotionStore.currentBlendshapes = parsed.blendshapes;
+        emotionStore.setRestingBlendshapes(parsed.blendshapes);
         break;
 
       case "error":

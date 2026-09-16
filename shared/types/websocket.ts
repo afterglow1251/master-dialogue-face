@@ -1,4 +1,8 @@
-import type { BlendshapeVector, ExpressionMode } from "./blendshape.ts";
+import type {
+  BlendshapeVector,
+  BlendshapesByMode,
+  ExpressionMode,
+} from "./blendshape.ts";
 import type {
   EmotionProbabilities,
   EmotionScore,
@@ -67,6 +71,7 @@ export interface WsBlendshapeResult {
   readonly mood: MoodState;
   readonly combinedEmotions: CombinedEmotionalState;
   readonly blendshapes: BlendshapeVector;
+  readonly blendshapesByMode: BlendshapesByMode;
   readonly processingTimeMs: number;
 }
 
@@ -79,6 +84,7 @@ export interface WsSpeechChunk {
   readonly alignment: SpeechAlignment;
   readonly emotions: WsTurnEmotions;
   readonly blendshapes: BlendshapeVector;
+  readonly blendshapesByMode: BlendshapesByMode;
 }
 
 interface WsReplyEnd {

@@ -42,7 +42,8 @@ function isSpeechChunkPayload(data: Record<string, unknown>): boolean {
     typeof data["audioBase64"] === "string" &&
     isSpeechAlignment(data["alignment"]) &&
     isRecord(data["emotions"]) &&
-    isRecord(data["blendshapes"])
+    isRecord(data["blendshapes"]) &&
+    isRecord(data["blendshapesByMode"])
   );
 }
 

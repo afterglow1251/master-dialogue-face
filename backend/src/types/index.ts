@@ -15,6 +15,7 @@ export {
   isExpressionMode,
   type ArkitBlendshapeName,
   type BlendshapeVector,
+  type BlendshapesByMode,
   type ExpressionMode,
 } from "@shared/types/blendshape.ts";
 

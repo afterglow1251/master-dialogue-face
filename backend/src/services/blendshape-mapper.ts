@@ -8,6 +8,7 @@ import {
   type EmotionLabel,
   type EmotionProbabilities,
   type ExpressionMode,
+  type BlendshapesByMode,
 } from "../types/index.ts";
 import { normalizeProbabilities } from "../utils/normalization.ts";
 import { composeExpression } from "./expression-composer.ts";
@@ -68,6 +69,16 @@ export interface ExpressionOptions {
 
 const DEFAULT_INTENSITY_MULTIPLIER = 1.0;
 const SYMMETRIC_SEED = 0;
+
+export function mapEmotionsByMode(
+  probabilities: EmotionProbabilities,
+  options: Omit<ExpressionOptions, "mode">,
+): BlendshapesByMode {
+  return {
+    linear: mapEmotions(probabilities, { ...options, mode: "linear" }),
+    facs: mapEmotions(probabilities, { ...options, mode: "facs" }),
+  };
+}
 
 export function mapEmotions(
   probabilities: EmotionProbabilities,

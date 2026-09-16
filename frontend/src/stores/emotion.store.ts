@@ -1,7 +1,11 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
-import type { BlendshapeVector } from "@shared/types/blendshape";
+import type {
+  BlendshapeVector,
+  BlendshapesByMode,
+} from "@shared/types/blendshape";
+import { useSettingsStore } from "@/stores/settings.store";
 import type {
   EmotionProbabilities,
   EmotionScore,
@@ -10,7 +14,11 @@ import type {
 import type { CombinedEmotionalState, MoodState } from "@shared/types/mood";
 
 export const useEmotionStore = defineStore("emotion", () => {
-  const currentBlendshapes = ref<BlendshapeVector | null>(null);
+  const settingsStore = useSettingsStore();
+  const blendshapesByMode = ref<BlendshapesByMode | null>(null);
+  const currentBlendshapes = computed<BlendshapeVector | null>(
+    () => blendshapesByMode.value?.[settingsStore.expressionMode] ?? null,
+  );
   const currentProbabilities = ref<EmotionProbabilities | null>(null);
   const currentVAD = ref<VADValues | null>(null);
   const topEmotions = ref<readonly EmotionScore[]>([]);
@@ -25,7 +33,7 @@ export const useEmotionStore = defineStore("emotion", () => {
   });
 
   function updateFromAnalysis(data: {
-    blendshapes: BlendshapeVector;
+    blendshapesByMode: BlendshapesByMode;
     categories: EmotionProbabilities;
     vad: VADValues;
     topEmotions: readonly EmotionScore[];
@@ -33,7 +41,7 @@ export const useEmotionStore = defineStore("emotion", () => {
     mood?: MoodState;
     combinedEmotions?: CombinedEmotionalState;
   }) {
-    currentBlendshapes.value = data.blendshapes;
+    blendshapesByMode.value = data.blendshapesByMode;
     currentProbabilities.value = data.categories;
     currentVAD.value = data.vad;
     topEmotions.value = data.topEmotions;
@@ -44,12 +52,12 @@ export const useEmotionStore = defineStore("emotion", () => {
   }
 
   function updateFromSpeech(data: {
-    blendshapes: BlendshapeVector;
+    blendshapesByMode: BlendshapesByMode;
     categories: EmotionProbabilities;
     vad: VADValues;
     topEmotions: readonly EmotionScore[];
   }) {
-    currentBlendshapes.value = data.blendshapes;
+    blendshapesByMode.value = data.blendshapesByMode;
     currentProbabilities.value = data.categories;
     currentVAD.value = data.vad;
     topEmotions.value = data.topEmotions;
@@ -59,8 +67,12 @@ export const useEmotionStore = defineStore("emotion", () => {
     currentMood.value = mood;
   }
 
+  function setRestingBlendshapes(blendshapes: BlendshapeVector) {
+    blendshapesByMode.value = { linear: blendshapes, facs: blendshapes };
+  }
+
   function reset() {
-    currentBlendshapes.value = null;
+    blendshapesByMode.value = null;
     currentProbabilities.value = null;
     currentVAD.value = null;
     topEmotions.value = [];
@@ -81,6 +93,7 @@ export const useEmotionStore = defineStore("emotion", () => {
     updateFromAnalysis,
     updateFromSpeech,
     updateMood,
+    setRestingBlendshapes,
     reset,
   };
 });

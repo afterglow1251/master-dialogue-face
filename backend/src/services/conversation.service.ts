@@ -15,7 +15,7 @@ import type {
   TurnRole,
 } from "../types/index.ts";
 import type { SentenceEvent } from "../utils/reply-format.ts";
-import { mapEmotions } from "./blendshape-mapper.ts";
+import { mapEmotionsByMode } from "./blendshape-mapper.ts";
 import { asymmetrySeedFromId } from "./expression-composer.ts";
 import * as dialogueService from "./dialogue.service.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
@@ -50,14 +50,20 @@ async function saveTurn(params: {
   readonly analysisText: string;
   readonly settings: ConversationSettings;
 }): Promise<WsBlendshapeResult> {
-  const { turn, analysis, blendshapes, mood, combinedEmotions } =
-    await dialogueService.analyzeAndSaveTurn({
-      dialogueId: params.dialogueId,
-      role: params.role,
-      text: params.text,
-      analysisText: params.analysisText,
-      ...params.settings,
-    });
+  const {
+    turn,
+    analysis,
+    blendshapes,
+    blendshapesByMode,
+    mood,
+    combinedEmotions,
+  } = await dialogueService.analyzeAndSaveTurn({
+    dialogueId: params.dialogueId,
+    role: params.role,
+    text: params.text,
+    analysisText: params.analysisText,
+    ...params.settings,
+  });
 
   return {
     type: "blendshape_update",
@@ -73,6 +79,7 @@ async function saveTurn(params: {
     mood,
     combinedEmotions,
     blendshapes,
+    blendshapesByMode,
     processingTimeMs: analysis.processing_time_ms,
   };
 }
@@ -106,6 +113,10 @@ async function prepareSpeechChunk(params: {
     moodCategories,
     params.emotionWeight,
   );
+  const blendshapesByMode = mapEmotionsByMode(combinedCategories, {
+    intensityMultiplier: params.expressionIntensity,
+    asymmetrySeed: asymmetrySeedFromId(params.dialogueId),
+  });
 
   return {
     type: "speech_chunk",
@@ -119,11 +130,8 @@ async function prepareSpeechChunk(params: {
       vad: analysis.emotions.vad,
       topEmotions: analysis.emotions.top_emotions,
     },
-    blendshapes: mapEmotions(combinedCategories, {
-      mode: params.expressionMode,
-      intensityMultiplier: params.expressionIntensity,
-      asymmetrySeed: asymmetrySeedFromId(params.dialogueId),
-    }),
+    blendshapes: blendshapesByMode[params.expressionMode],
+    blendshapesByMode,
   };
 }
 

@@ -27,7 +27,7 @@ export const useConversationStore = defineStore("conversation", () => {
     onChunkStart(chunk) {
       phase.value = "speaking";
       emotionStore.updateFromSpeech({
-        blendshapes: chunk.blendshapes,
+        blendshapesByMode: chunk.blendshapesByMode,
         categories: chunk.emotions.categories,
         vad: chunk.emotions.vad,
         topEmotions: chunk.emotions.topEmotions,

@@ -2,13 +2,14 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.ts";
 import { dialogues, dialogueTurns } from "../db/schema.ts";
-import { mapEmotions } from "./blendshape-mapper.ts";
+import { mapEmotionsByMode } from "./blendshape-mapper.ts";
 import { asymmetrySeedFromId } from "./expression-composer.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
 import type { HistoryTurn } from "./llm.service.ts";
 import type {
   BlendshapeVector,
+  BlendshapesByMode,
   CharacterId,
   CombinedEmotionalState,
   DialogueId,
@@ -137,6 +138,7 @@ export interface AnalyzeTurnResult {
   readonly turn: NonNullable<Awaited<ReturnType<typeof saveTurn>>>;
   readonly analysis: EmotionAnalysisResult;
   readonly blendshapes: BlendshapeVector;
+  readonly blendshapesByMode: BlendshapesByMode;
   readonly mood: MoodState;
   readonly combinedEmotions: CombinedEmotionalState;
 }
@@ -166,11 +168,11 @@ export async function analyzeAndSaveTurn(params: {
     },
   );
 
-  const blendshapes = mapEmotions(combinedEmotions.categories, {
-    mode: params.expressionMode,
+  const blendshapesByMode = mapEmotionsByMode(combinedEmotions.categories, {
     intensityMultiplier: params.expressionIntensity,
     asymmetrySeed: asymmetrySeedFromId(params.dialogueId),
   });
+  const blendshapes = blendshapesByMode[params.expressionMode];
 
   const turnIndex = await getNextTurnIndex(params.dialogueId);
 
@@ -202,5 +204,12 @@ export async function analyzeAndSaveTurn(params: {
     await updateDialogueTitle(params.dialogueId, autoTitle);
   }
 
-  return { turn, analysis, blendshapes, mood, combinedEmotions };
+  return {
+    turn,
+    analysis,
+    blendshapes,
+    blendshapesByMode,
+    mood,
+    combinedEmotions,
+  };
 }

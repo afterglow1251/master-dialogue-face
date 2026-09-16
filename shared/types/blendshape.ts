@@ -72,3 +72,7 @@ const EXPRESSION_MODE_NAMES: ReadonlySet<string> = new Set(EXPRESSION_MODES);
 export function isExpressionMode(value: unknown): value is ExpressionMode {
   return typeof value === "string" && EXPRESSION_MODE_NAMES.has(value);
 }
+
+export type BlendshapesByMode = Readonly<
+  Record<ExpressionMode, BlendshapeVector>
+>;
