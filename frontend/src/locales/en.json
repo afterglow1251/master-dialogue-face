@@ -101,17 +101,13 @@
       "title": "Emotional Dialogue Studio",
       "subtitle": "Log in to continue your dialogue sessions.",
       "description": "Pick up where you left off, revisit previous conversations, and keep your session history in one place.",
-      "footer": "Built for ongoing dialogue work with persistent history and a cleaner way to resume each session.",
-      "newHere": "New here?",
-      "createAccount": "Create an account"
+      "footer": "Built for ongoing dialogue work with persistent history and a cleaner way to resume each session."
     },
     "signUp": {
       "title": "Secure Access",
       "subtitle": "Create an account and keep each conversation scoped to you.",
       "description": "Create your workspace to save conversations, return to them later, and keep your dialogue flow consistent across sessions.",
-      "footer": "A lightweight sign-up flow with private access to your saved sessions from the start.",
-      "hasAccount": "Already have an account?",
-      "logIn": "Log in"
+      "footer": "A lightweight sign-up flow with private access to your saved sessions from the start."
     }
   },
   "emotions": {

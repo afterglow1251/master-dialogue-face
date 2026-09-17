@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { SignInButton, SignUp } from "@clerk/vue";
-
-import { Button } from "@/components/ui/button";
+import { SignUp } from "@clerk/vue";
 
 const { t } = useI18n();
 </script>
@@ -21,7 +19,7 @@ const { t } = useI18n();
       <div
         class="flex items-center justify-center px-6 py-8 md:order-2 md:px-8"
       >
-        <div class="w-full max-w-md space-y-4">
+        <div class="w-full max-w-md">
           <SignUp
             path="/sign-up"
             routing="path"
@@ -29,15 +27,6 @@ const { t } = useI18n();
             force-redirect-url="/"
             fallback-redirect-url="/"
           />
-
-          <div class="text-center text-sm text-muted-foreground">
-            {{ t("auth.signUp.hasAccount") }}
-            <SignInButton mode="redirect" force-redirect-url="/sign-in">
-              <Button variant="link" class="px-1">{{
-                t("auth.signUp.logIn")
-              }}</Button>
-            </SignInButton>
-          </div>
         </div>
       </div>
 
