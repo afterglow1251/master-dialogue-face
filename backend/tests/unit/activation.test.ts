@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  AU_TO_BLENDSHAPES,
   ANTAGONIST_PAIRS,
+  AU_TO_BLENDSHAPES,
+  EMOTION_ACTION_UNITS,
   regionOf,
-} from "../../src/data/action-units.ts";
-import { EMOTION_ACTION_UNITS } from "../../src/data/emotion-action-units.ts";
+} from "@shared/tables/index.ts";
 import {
   aggregateActionUnits,
   composeExpression,
@@ -13,7 +13,7 @@ import {
   resolveAntagonists,
   selectActiveEmotions,
   signedHash,
-} from "../../src/services/expression-composer.ts";
+} from "@shared/math/index.ts";
 import {
   ARKIT_BLENDSHAPES,
   EMOTION_LABELS,

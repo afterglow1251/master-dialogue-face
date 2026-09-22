@@ -1,3 +1,5 @@
+import { zeroed } from "./zeroed.ts";
+
 export const ARKIT_BLENDSHAPES = [
   "browDownLeft",
   "browDownRight",
@@ -58,9 +60,15 @@ export type ArkitBlendshapeName = (typeof ARKIT_BLENDSHAPES)[number];
 export type BlendshapeVector = Record<ArkitBlendshapeName, number>;
 
 export function createEmptyBlendshapeVector(): BlendshapeVector {
-  return Object.fromEntries(
-    ARKIT_BLENDSHAPES.map((name) => [name, 0]),
-  ) as BlendshapeVector;
+  return zeroed(ARKIT_BLENDSHAPES);
+}
+
+const BLENDSHAPE_NAMES: ReadonlySet<string> = new Set(ARKIT_BLENDSHAPES);
+
+export function isArkitBlendshapeName(
+  value: string,
+): value is ArkitBlendshapeName {
+  return BLENDSHAPE_NAMES.has(value);
 }
 
 export const EXPRESSION_MODES = ["linear", "facs"] as const;

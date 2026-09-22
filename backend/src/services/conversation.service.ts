@@ -16,7 +16,10 @@ import type {
 } from "../types/index.ts";
 import type { SentenceEvent } from "../utils/reply-format.ts";
 import { mapEmotionsByMode } from "./blendshape-mapper.ts";
-import { asymmetrySeedFromId } from "./expression-composer.ts";
+import {
+  asymmetrySeedFromId,
+  combineEmotionAndMood,
+} from "@shared/math/index.ts";
 import * as dialogueService from "./dialogue.service.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
@@ -108,7 +111,7 @@ async function prepareSpeechChunk(params: {
     params.moodCategories,
   ]);
 
-  const combinedCategories = emotionalState.combineEmotionAndMood(
+  const combinedCategories = combineEmotionAndMood(
     analysis.emotions.categories,
     moodCategories,
     params.emotionWeight,

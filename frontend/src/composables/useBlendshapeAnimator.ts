@@ -5,7 +5,7 @@ import { useConversationStore } from "@/stores/conversation.store";
 import { useEmotionStore } from "@/stores/emotion.store";
 import { useSettingsStore } from "@/stores/settings.store";
 import { SPEECH_SMOOTHING_ALPHA } from "@/utils/constants";
-import { alphaToTau, applyEMA, frameAlpha } from "@/utils/ema";
+import { alphaToTau, applyEMA, frameAlpha } from "@shared/math/smoothing.ts";
 import { composeSpeechTarget } from "@/utils/lipSync";
 import { MOUTH_BLENDSHAPES } from "@/utils/visemes";
 

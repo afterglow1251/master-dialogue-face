@@ -8,7 +8,7 @@ import {
   combineEmotionAndMood,
   extractTopEmotions,
   categoriesToVAD,
-} from "../../src/services/emotional-state.service.ts";
+} from "@shared/math/index.ts";
 import {
   EMOTION_LABELS,
   NEUTRAL_VAD,
@@ -16,7 +16,7 @@ import {
   type EmotionProbabilities,
   type VADValues,
 } from "../../src/types/index.ts";
-import { EMOTION_VAD_CENTROIDS } from "../../src/data/emotion-vad-centroids.ts";
+import { EMOTION_VAD_CENTROIDS } from "@shared/tables/index.ts";
 
 // ── Helpers ──
 

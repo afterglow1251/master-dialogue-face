@@ -18,7 +18,7 @@
  */
 
 import type { EmotionLabel } from "../types/index.ts";
-import type { ActionUnit } from "./action-units.ts";
+import type { ActionUnit } from "./au-blendshape.ts";
 
 export interface EmotionActionUnit {
   readonly au: ActionUnit;

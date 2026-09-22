@@ -3,10 +3,7 @@ import { InferenceClient } from "@huggingface/inference";
 import { config } from "../config.ts";
 import { EMOTION_LABELS, type EmotionAnalysisResult } from "../types/index.ts";
 import { toEmotionProbabilities } from "../utils/emotion-scores.ts";
-import {
-  categoriesToVAD,
-  extractTopEmotions,
-} from "./emotional-state.service.ts";
+import { categoriesToVAD, extractTopEmotions } from "@shared/math/index.ts";
 
 const HF_PROVIDER = "hf-inference";
 const MODEL_LABEL_COUNT = EMOTION_LABELS.length;

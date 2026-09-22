@@ -1,12 +1,18 @@
 export {
   ARKIT_BLENDSHAPES,
+  EXPRESSION_MODES,
   createEmptyBlendshapeVector,
+  isArkitBlendshapeName,
+  isExpressionMode,
   type ArkitBlendshapeName,
   type BlendshapeVector,
+  type BlendshapesByMode,
+  type ExpressionMode,
 } from "./blendshape.ts";
 
 export {
   EMOTION_LABELS,
+  createEmptyProbabilities,
   type EmotionLabel,
   type EmotionProbabilities,
   type VADValues,

@@ -18,16 +18,18 @@
                                  └─────────────┘
 ```
 
+Сама модель емоцій — усі формули та довідкові таблиці з посиланнями на місце в коді — описана в [MODEL.md](MODEL.md). Чисті обчислення лежать у `shared/math/`, емпіричні дані з літератури — у `shared/tables/`.
+
 ## Стек технологій
 
-| Шар         | Технології |
-| ----------- | --- |
-| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3 |
-| Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox |
+| Шар         | Технології                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3                                               |
+| Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox                                                                        |
 | AI-сервіси  | Claude Haiku 4.5 (Anthropic SDK), RoBERTa go_emotions (Hugging Face Inference Providers), ElevenLabs TTS, Web Speech API |
-| База даних  | PostgreSQL 16 |
-| Авторизація | Clerk (JWT) |
-| DevOps      | Docker, Docker Compose |
+| База даних  | PostgreSQL 16                                                                                                            |
+| Авторизація | Clerk (JWT)                                                                                                              |
+| DevOps      | Docker, Docker Compose                                                                                                   |
 
 Версії TypeScript закріплено точно (без `^` / `~`) — TypeScript не дотримується semver.
 
@@ -73,11 +75,11 @@ cd backend && bun run db:migrate && bun run db:seed && bun run dev
 cd frontend && bun run dev
 ```
 
-| Сервіс            | URL |
-| --- | --- |
-| Frontend          | http://localhost:5173 |
-| Backend API       | http://localhost:3000 |
-| Backend WebSocket | ws://localhost:3000/ws |
+| Сервіс               | URL                           |
+| -------------------- | ----------------------------- |
+| Frontend             | http://localhost:5173         |
+| Backend API          | http://localhost:3000         |
+| Backend WebSocket    | ws://localhost:3000/ws        |
 | OpenAPI-документація | http://localhost:3000/openapi |
 
 ### Розробка через Docker

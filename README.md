@@ -18,16 +18,18 @@ System for automatic generation of realistic facial expressions of virtual chara
                                  └─────────────┘
 ```
 
+The emotion model itself — every formula and every reference table, with source locations — is documented in [MODEL.md](MODEL.md). Pure computation lives in `shared/math/`, empirical data from the literature in `shared/tables/`.
+
 ## Tech Stack
 
-| Layer       | Technology |
-| ----------- | --- |
-| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3 |
-| Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox |
+| Layer       | Technology                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3                                               |
+| Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox                                                                        |
 | AI services | Claude Haiku 4.5 (Anthropic SDK), RoBERTa go_emotions (Hugging Face Inference Providers), ElevenLabs TTS, Web Speech API |
-| Database    | PostgreSQL 16 |
-| Auth        | Clerk (JWT) |
-| DevOps      | Docker, Docker Compose |
+| Database    | PostgreSQL 16                                                                                                            |
+| Auth        | Clerk (JWT)                                                                                                              |
+| DevOps      | Docker, Docker Compose                                                                                                   |
 
 TypeScript versions are pinned (no `^` / `~`) — TypeScript does not follow semver.
 
@@ -73,11 +75,11 @@ cd backend && bun run db:migrate && bun run db:seed && bun run dev
 cd frontend && bun run dev
 ```
 
-| Service           | URL |
-| --- | --- |
-| Frontend          | http://localhost:5173 |
-| Backend API       | http://localhost:3000 |
-| Backend WebSocket | ws://localhost:3000/ws |
+| Service           | URL                           |
+| ----------------- | ----------------------------- |
+| Frontend          | http://localhost:5173         |
+| Backend API       | http://localhost:3000         |
+| Backend WebSocket | ws://localhost:3000/ws        |
 | OpenAPI Docs      | http://localhost:3000/openapi |
 
 ### Docker Development

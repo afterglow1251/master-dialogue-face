@@ -12,6 +12,7 @@ export {
   ARKIT_BLENDSHAPES,
   EXPRESSION_MODES,
   createEmptyBlendshapeVector,
+  isArkitBlendshapeName,
   isExpressionMode,
   type ArkitBlendshapeName,
   type BlendshapeVector,
@@ -21,6 +22,7 @@ export {
 
 export {
   EMOTION_LABELS,
+  createEmptyProbabilities,
   type EmotionLabel,
   type EmotionProbabilities,
   type VADValues,

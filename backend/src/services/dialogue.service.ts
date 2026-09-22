@@ -3,7 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/index.ts";
 import { dialogues, dialogueTurns } from "../db/schema.ts";
 import { mapEmotionsByMode } from "./blendshape-mapper.ts";
-import { asymmetrySeedFromId } from "./expression-composer.ts";
+import { asymmetrySeedFromId } from "@shared/math/index.ts";
 import { analyzeEmotions } from "./emotion-analyzer.ts";
 import * as emotionalState from "./emotional-state.service.ts";
 import type { HistoryTurn } from "./llm.service.ts";

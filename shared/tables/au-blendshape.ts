@@ -6,7 +6,7 @@
  * (https://melindaozel.com/arkit-to-facs-cheat-sheet/).
  */
 
-import { ARKIT_BLENDSHAPES, type ArkitBlendshapeName } from "../types/index.ts";
+import type { ArkitBlendshapeName } from "../types/index.ts";
 
 export const ACTION_UNITS = [
   1, 2, 4, 5, 6, 7, 9, 10, 12, 14, 15, 16, 17, 20, 23, 24, 25, 26, 43,
@@ -88,11 +88,3 @@ export const ANTAGONIST_PAIRS: readonly (readonly [ActionUnit, ActionUnit])[] =
     [25, 24],
     [6, 9],
   ];
-
-const BLENDSHAPE_NAMES: ReadonlySet<string> = new Set(ARKIT_BLENDSHAPES);
-
-export function isArkitBlendshapeName(
-  value: string,
-): value is ArkitBlendshapeName {
-  return BLENDSHAPE_NAMES.has(value);
-}

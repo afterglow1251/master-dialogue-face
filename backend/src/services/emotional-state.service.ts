@@ -1,187 +1,23 @@
-/**
- * Emotional State Service — ALMA-based mood layer.
- *
- * Implements a three-layer emotional model:
- *   1. Emotion (per-utterance, from RoBERTa) — already exists
- *   2. Mood (accumulated across dialogue turns) — this service
- *   3. Combined State (drives blendshape mapping) — this service
- *
- * Mood update formula:
- *   Mood(t) = β_eff × E_vad(t) + (1-β_eff) × [N + (Mood(t-1) - N) × e^(-Δt/τ)]
- *   where N = NEUTRAL_VAD, τ = decay time constant and
- *   β_eff = β × (1 - p_neutral) scales reactivity down for neutral utterances
- *
- * Combined state formula:
- *   S(t) = w_e × EmotionCategories(t) + (1-w_e) × MoodCategories(t)
- */
-
 import { eq } from "drizzle-orm";
 
-import { EMOTION_VAD_CENTROIDS } from "../data/emotion-vad-centroids.ts";
 import { db } from "../db/index.ts";
 import { dialogueMoodStates } from "../db/schema.ts";
 import {
-  EMOTION_LABELS,
   NEUTRAL_VAD,
   type CombinedEmotionalState,
   type DialogueId,
-  type EmotionLabel,
   type EmotionProbabilities,
-  type EmotionScore,
   type MoodState,
   type VADValues,
 } from "../types/index.ts";
-
-// ── Pure computation functions (exported for unit testing) ──
-
-/** Exponential decay: e^(-Δt/τ) */
-export function computeDecay(deltaSeconds: number, tauSeconds: number): number {
-  if (tauSeconds <= 0) return 0;
-  return Math.exp(-deltaSeconds / tauSeconds);
-}
-
-/**
- * Updates mood VAD using the ALMA-based formula.
- *
- * Mood(t) = β × E_vad(t) + (1-β) × [N + (Mood(t-1) - N) × decay(Δt)]
- *
- * This ensures mood decays toward NEUTRAL_VAD over time,
- * and each new emotion nudges the mood proportionally to β.
- */
-export function updateMoodVAD(params: {
-  readonly previousMood: VADValues;
-  readonly currentEmotionVAD: VADValues;
-  readonly deltaSeconds: number;
-  readonly beta: number;
-  readonly tau: number;
-}): VADValues {
-  const { previousMood, currentEmotionVAD, deltaSeconds, beta, tau } = params;
-  const decay = computeDecay(deltaSeconds, tau);
-
-  function blend(dim: keyof VADValues, neutral: number): number {
-    const decayed = neutral + (previousMood[dim] - neutral) * decay;
-    const result = beta * currentEmotionVAD[dim] + (1 - beta) * decayed;
-    return Math.min(1.0, Math.max(0.0, result));
-  }
-
-  return {
-    valence: blend("valence", NEUTRAL_VAD.valence),
-    arousal: blend("arousal", NEUTRAL_VAD.arousal),
-    dominance: blend("dominance", NEUTRAL_VAD.dominance),
-  };
-}
-
-/**
- * Converts a VAD point to emotion category weights via inverse-distance weighting.
- *
- * weight_i = 1 / (distance_i² + σ²)
- * Normalized so weights sum to 1.
- */
-export function vadToEmotionWeights(moodVAD: VADValues): EmotionProbabilities {
-  const KERNEL_SIGMA = 0.1;
-
-  const weights = new Map<EmotionLabel, number>();
-  let weightSum = 0;
-
-  for (const [emotion, centroid] of EMOTION_VAD_CENTROIDS) {
-    const dv = moodVAD.valence - centroid.valence;
-    const da = moodVAD.arousal - centroid.arousal;
-    const dd = moodVAD.dominance - centroid.dominance;
-    const squaredDistance = dv * dv + da * da + dd * dd;
-    const w = 1 / (squaredDistance + KERNEL_SIGMA * KERNEL_SIGMA);
-    weights.set(emotion, w);
-    weightSum += w;
-  }
-
-  const result = {} as Record<EmotionLabel, number>;
-  for (const label of EMOTION_LABELS) {
-    result[label] = (weights.get(label) ?? 0) / weightSum;
-  }
-
-  return result as EmotionProbabilities;
-}
-
-/**
- * Combines per-utterance emotion and mood into a single category distribution.
- *
- * S(t) = w_e × EmotionCategories(t) + (1-w_e) × MoodCategories(t)
- * Result is re-normalized to sum to 1.
- */
-export function combineEmotionAndMood(
-  emotionCategories: EmotionProbabilities,
-  moodCategories: EmotionProbabilities,
-  emotionWeight: number,
-): EmotionProbabilities {
-  const moodWeight = 1 - emotionWeight;
-  const result = {} as Record<EmotionLabel, number>;
-  let sum = 0;
-
-  for (const label of EMOTION_LABELS) {
-    const v =
-      emotionWeight * emotionCategories[label] +
-      moodWeight * moodCategories[label];
-    result[label] = v;
-    sum += v;
-  }
-
-  if (sum > 0) {
-    for (const label of EMOTION_LABELS) {
-      result[label] /= sum;
-    }
-  }
-
-  return result as EmotionProbabilities;
-}
-
-/**
- * Scales mood reactivity by how non-neutral the utterance is.
- *
- * β_eff = β × (1 - p_neutral)
- */
-export function effectiveReactivity(
-  beta: number,
-  neutralProbability: number,
-): number {
-  const clamped = Math.min(1, Math.max(0, neutralProbability));
-  return beta * (1 - clamped);
-}
-
-/** Extracts top-N emotions sorted by probability descending. */
-export function extractTopEmotions(
-  probabilities: EmotionProbabilities,
-  n = 5,
-): readonly EmotionScore[] {
-  return (Object.entries(probabilities) as Array<[EmotionLabel, number]>)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, n)
-    .map(([name, probability]) => ({ name, probability }));
-}
-
-/** Computes weighted-average VAD from category probabilities. */
-export function categoriesToVAD(
-  probabilities: EmotionProbabilities,
-): VADValues {
-  let vSum = 0;
-  let aSum = 0;
-  let dSum = 0;
-  let wSum = 0;
-
-  for (const [emotion, centroid] of EMOTION_VAD_CENTROIDS) {
-    const p = probabilities[emotion];
-    vSum += p * centroid.valence;
-    aSum += p * centroid.arousal;
-    dSum += p * centroid.dominance;
-    wSum += p;
-  }
-
-  if (wSum === 0) return { ...NEUTRAL_VAD };
-
-  return {
-    valence: vSum / wSum,
-    arousal: aSum / wSum,
-    dominance: dSum / wSum,
-  };
-}
+import {
+  categoriesToVAD,
+  combineEmotionAndMood,
+  effectiveReactivity,
+  extractTopEmotions,
+  updateMoodVAD,
+  vadToEmotionWeights,
+} from "@shared/math/index.ts";
 
 // ── Database operations ──
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { normalizeProbabilities } from "../../src/utils/normalization.ts";
+import { normalizeProbabilities } from "@shared/math/index.ts";
 import { EMOTION_LABELS, type EmotionLabel } from "../../src/types/index.ts";
 
 function makeProbs(

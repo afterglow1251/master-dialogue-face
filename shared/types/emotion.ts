@@ -1,3 +1,5 @@
+import { zeroed } from "./zeroed.ts";
+
 export const EMOTION_LABELS = [
   "admiration",
   "amusement",
@@ -42,4 +44,8 @@ export interface VADValues {
 export interface EmotionScore {
   readonly name: EmotionLabel;
   readonly probability: number;
+}
+
+export function createEmptyProbabilities(): EmotionProbabilities {
+  return zeroed(EMOTION_LABELS);
 }
