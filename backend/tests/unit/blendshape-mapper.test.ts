@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 import { mapEmotionsToBlendshapes } from "../../src/services/blendshape-mapper.ts";
 import {
