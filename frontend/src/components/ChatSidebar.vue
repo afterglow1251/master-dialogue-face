@@ -59,19 +59,18 @@ function handleSelect(dialogueId: string) {
 }
 
 const editingId = ref<string | null>(null);
-const deletingId = ref<string | null>(null);
+const deletingIds = ref<Set<string>>(new Set());
 
 function handleDelete(dialogueId: string) {
-  deletingId.value = dialogueId;
+  deletingIds.value.add(dialogueId);
   emit("deleteChat", dialogueId);
 }
 
 watch(dialogueList, () => {
-  if (
-    deletingId.value &&
-    !dialogueList.value.some((d) => d.id === deletingId.value)
-  ) {
-    deletingId.value = null;
+  for (const id of deletingIds.value) {
+    if (!dialogueList.value.some((d) => d.id === id)) {
+      deletingIds.value.delete(id);
+    }
   }
 });
 const titleRefs = ref<Map<string, HTMLElement>>(new Map());
@@ -132,7 +131,7 @@ function handleTitleKeydown(event: KeyboardEvent) {
           class="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50 cursor-pointer"
           :class="{
             'bg-muted': dialogue.id === currentDialogueId,
-            'opacity-50 pointer-events-none': deletingId === dialogue.id,
+            'opacity-50 pointer-events-none': deletingIds.has(dialogue.id),
           }"
           @click="handleSelect(dialogue.id)"
         >
@@ -153,7 +152,7 @@ function handleTitleKeydown(event: KeyboardEvent) {
           </div>
 
           <LoaderCircle
-            v-if="deletingId === dialogue.id"
+            v-if="deletingIds.has(dialogue.id)"
             :size="14"
             class="ml-2 shrink-0 animate-spin text-muted-foreground"
           />
