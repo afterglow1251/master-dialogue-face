@@ -6,8 +6,6 @@ services:
       - POSTGRES_USER=${DB_USER:-facial_user}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-facial_pass}
       - POSTGRES_DB=${DB_NAME:-facial_expressions}
-    ports:
-      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -27,6 +25,7 @@ services:
     restart: unless-stopped
     env_file: ./backend/.env
     environment:
+      - DATABASE_URL=postgresql://${DB_USER:-facial_user}:${DB_PASSWORD:-facial_pass}@postgres:5432/${DB_NAME:-facial_expressions}
       - PORT=3000
     ports:
       - "${BACKEND_PORT:-3000}:3000"

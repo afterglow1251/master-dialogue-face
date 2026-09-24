@@ -39,7 +39,7 @@ TypeScript versions are pinned (no `^` / `~`) — TypeScript does not follow sem
 git clone https://github.com/afterglow1251/master-dialogue-face && cd master-code
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-# Fill: DATABASE_URL, CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
+# Fill: CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
 docker compose up -d
 # Open http://localhost
 ```
@@ -94,7 +94,7 @@ Mounts source directories for hot-reload.
 
 Each app has its own env file: `backend/.env` (copy from `backend/.env.example`) and `frontend/.env` (copy from `frontend/.env.example`). Docker Compose reads the same files via `env_file`. Required:
 
-- `DATABASE_URL` — PostgreSQL connection string
+- `DATABASE_URL` — PostgreSQL connection string (only for running the backend outside Docker; Compose points it at its own `postgres` service)
 - `CLERK_SECRET_KEY` · `CLERK_PUBLISHABLE_KEY` — Clerk auth keys
 - `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key for frontend
 - `HF_TOKEN` — Hugging Face token for the RoBERTa emotion model

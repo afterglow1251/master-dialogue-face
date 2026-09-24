@@ -39,7 +39,7 @@
 git clone https://github.com/afterglow1251/master-dialogue-face && cd master-code
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-# Заповніть: DATABASE_URL, CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
+# Заповніть: CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
 docker compose up -d
 # Відкрийте http://localhost
 ```
@@ -94,7 +94,7 @@ docker compose -f docker-compose.dev.yml up
 
 Кожен застосунок має свій env-файл: `backend/.env` (копія `backend/.env.example`) і `frontend/.env` (копія `frontend/.env.example`). Docker Compose читає ці ж файли через `env_file`. Обов'язкові:
 
-- `DATABASE_URL` — рядок підключення PostgreSQL
+- `DATABASE_URL` — рядок підключення PostgreSQL (лише для запуску бекенду поза Docker; Compose підставляє власний сервіс `postgres`)
 - `CLERK_SECRET_KEY` · `CLERK_PUBLISHABLE_KEY` — ключі Clerk
 - `VITE_CLERK_PUBLISHABLE_KEY` — ключ Clerk для frontend
 - `HF_TOKEN` — токен Hugging Face для моделі емоцій RoBERTa
