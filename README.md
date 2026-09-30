@@ -1,14 +1,45 @@
-> [English](README.md) · [Українська](README.uk.md)
+> [Українська](README.md) · [English](README.en.md)
 
-# Facial Expression Generator
+# Генератор виразів обличчя
 
-System for automatic generation of realistic facial expressions of virtual characters based on dialogue emotional context analysis. Master's thesis project: the avatar holds a spoken conversation (voice dictation, Claude Haiku replies, ElevenLabs speech with lip-sync), analyzes the emotion of every sentence via RoBERTa (27 GoEmotions categories), maps it to 52 ARKit blendshapes, and animates a 3D avatar at 60 fps.
+**Тема магістерської роботи:** «Система для автоматичної генерації реалістичних виразів обличчя віртуальних персонажів на основі аналізу емоційного контексту діалогу».
 
-## Architecture
+**Автор:** Войтко Юрій, група ТВ-51мп.
+
+## Опис програми
+
+Вебзастосунок, у якому користувач веде голосовий або текстовий діалог із 3D-аватаром. Аватар відповідає голосом із синхронізацією губ, а вираз його обличчя змінюється відповідно до емоційного контексту розмови.
+
+Як це працює:
+
+1. Користувач пише або надиктовує репліку.
+2. Мовна модель Claude Haiku формує відповідь аватара, а сервіс ElevenLabs озвучує її.
+3. Модель RoBERTa, навчена на наборі GoEmotions, визначає ймовірності 28 емоційних категорій у репліці.
+4. Модель настрою ALMA накопичує емоційний стан аватара впродовж усієї розмови.
+5. Емоції та настрій перетворюються на 52 параметри міміки ARKit blendshapes одним із двох способів на вибір: через одиниці дії FACS або через лінійну суміш шаблонів емоцій.
+6. Обличчя аватара плавно анімується з частотою оновлення екрана; згладжування не залежить від частоти кадрів.
+
+Для кожної репліки зберігається звіт: виявлені емоції, зміна настрою та її динаміка. Усі формули моделі та довідкові таблиці з посиланнями на код описано в [MODEL.md](MODEL.md).
+
+## Зміст
+
+- [Архітектура](#архітектура)
+- [Стек технологій](#стек-технологій)
+- [Структура проєкту](#структура-проєкту)
+- [Системні вимоги та необхідне ПЗ](#системні-вимоги-та-необхідне-пз)
+- [Отримання API-ключів](#отримання-api-ключів)
+- [Встановлення та запуск](#встановлення-та-запуск)
+- [Змінні оточення](#змінні-оточення)
+- [Інструкція користувача](#інструкція-користувача)
+- [Можливі проблеми](#можливі-проблеми)
+- [Локальна розробка](#локальна-розробка)
+- [Тестування](#тестування)
+
+## Архітектура
 
 ```
 ┌─────────────┐  WebSocket/REST  ┌─────────────┐  HTTPS  ┌────────────────────────────┐
-│  Frontend   │ ◄──────────────► │   Backend   │ ──────► │ External AI APIs           │
+│  Frontend   │ ◄──────────────► │   Backend   │ ──────► │ Зовнішні AI API            │
 │  Vue 3 +    │                  │  Elysia.js  │         │ · Anthropic (Claude Haiku) │
 │  Three.js   │                  │  Bun        │         │ · Hugging Face (RoBERTa)   │
 └─────────────┘                  └──────┬──────┘         │ · ElevenLabs (TTS)         │
@@ -18,99 +49,238 @@ System for automatic generation of realistic facial expressions of virtual chara
                                  └─────────────┘
 ```
 
-The emotion model itself — every formula and every reference table, with source locations — is documented in [MODEL.md](MODEL.md). Pure computation lives in `shared/math/`, empirical data from the literature in `shared/tables/`.
+Frontend відображає аватар і чат, розпізнає мовлення та анімує міміку. Backend зберігає діалоги, звертається до зовнішніх AI-сервісів і обчислює емоції, настрій та параметри міміки. Під час розмови дані передаються через WebSocket, керування чатами працює через REST API.
 
-## Tech Stack
+## Стек технологій
 
-| Layer       | Technology                                                                                                               |
+| Шар         | Технології                                                                                                               |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind 4, shadcn-vue, Pinia 3                                               |
+| Frontend    | Vue 3.5, TypeScript 5.9.3, Three.js 0.183, Tailwind CSS 4, shadcn-vue, Pinia 3                                           |
 | Backend     | Elysia.js 1.4, Bun 1.2, Drizzle ORM 0.45, TypeBox                                                                        |
-| AI services | Claude Haiku 4.5 (Anthropic SDK), RoBERTa go_emotions (Hugging Face Inference Providers), ElevenLabs TTS, Web Speech API |
-| Database    | PostgreSQL 16                                                                                                            |
-| Auth        | Clerk (JWT)                                                                                                              |
+| AI-сервіси  | Claude Haiku 4.5 (Anthropic SDK), RoBERTa go_emotions (Hugging Face Inference Providers), ElevenLabs TTS, Web Speech API |
+| База даних  | PostgreSQL 16                                                                                                            |
+| Авторизація | Clerk (JWT)                                                                                                              |
 | DevOps      | Docker, Docker Compose                                                                                                   |
 
-TypeScript versions are pinned (no `^` / `~`) — TypeScript does not follow semver.
+## Структура проєкту
 
-## Quick Start (Docker)
-
-```bash
-git clone https://github.com/afterglow1251/master-dialogue-face && cd master-code
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# Fill: CLERK_*, HF_TOKEN, ANTHROPIC_API_KEY, ELEVENLABS_*, VITE_CLERK_PUBLISHABLE_KEY
-docker compose up -d
-# Open http://localhost
+```
+├── backend/                 серверна частина (Bun + Elysia.js)
+│   ├── src/api/             REST API, WebSocket, перевірка авторизації
+│   ├── src/services/        діалог, LLM, TTS, аналіз емоцій, настрій, міміка
+│   ├── src/db/              схема БД, запуск міграцій, початкові дані
+│   ├── drizzle/             SQL-міграції бази даних
+│   └── tests/               unit-тести
+├── frontend/                клієнтська частина (Vue 3 + Three.js)
+│   ├── src/components/      компоненти інтерфейсу
+│   ├── src/composables/     логіка: 3D-сцена, анімація, WebSocket, диктування
+│   └── src/stores/          стан застосунку (Pinia)
+├── shared/                  спільний код frontend і backend
+│   ├── math/                формули моделі (активація, настрій, згладжування)
+│   ├── tables/              довідкові таблиці (емоція → VAD, емоція → FACS, FACS → blendshapes)
+│   └── types/               спільні типи
+├── docker-compose.yml       запуск усієї системи
+├── docker-compose.dev.yml   запуск для розробки з автоматичним перезавантаженням
+└── MODEL.md                 опис моделі емоцій
 ```
 
-## Local Development
+## Системні вимоги та необхідне ПЗ
 
-### Prerequisites
+**Апаратні вимоги (орієнтовно):** 4 ГБ оперативної пам'яті, 2 ГБ вільного місця на диску, доступ до інтернету.
 
-- Bun ≥ 1.2 · PostgreSQL 16 · Docker (optional)
-- Chrome or Edge for voice dictation (Web Speech API)
+| ПЗ                      | Версія                                   | Призначення                                           | Де взяти                                                           |
+| ----------------------- | ---------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ |
+| Операційна система      | Windows 10/11, macOS 12+, Linux (x86_64) | Будь-яка ОС, на якій працює Docker                    |                                                                    |
+| Git                     | будь-яка                                 | Завантаження репозиторію                              | [git-scm.com](https://git-scm.com/downloads)                       |
+| Docker з Docker Compose | Docker 24+                               | Запуск бази даних, backend і frontend однією командою | [docs.docker.com](https://docs.docker.com/get-started/get-docker/) |
+| Браузер                 | Chrome або Edge (актуальна версія)       | Інтерфейс і голосове диктування (Web Speech API)      |                                                                    |
+| Мікрофон і динаміки     |                                          | Голосовий діалог; без мікрофона можна писати текстом  |                                                                    |
 
-### Setup
+У Windows Docker Desktop працює через WSL 2, інсталятор налаштовує його автоматично.
+
+PostgreSQL 16, Bun, Nginx і всі бібліотеки окремо встановлювати не потрібно: вони завантажуються та запускаються в Docker-контейнерах. Для запуску без Docker див. [Локальна розробка](#локальна-розробка).
+
+Також потрібні облікові записи в чотирьох зовнішніх сервісах (див. наступний розділ).
+
+## Отримання API-ключів
+
+| Сервіс       | Для чого                        | Вартість                               |
+| ------------ | ------------------------------- | -------------------------------------- |
+| Clerk        | Реєстрація та вхід користувачів | Безкоштовно                            |
+| Hugging Face | Аналіз емоцій (RoBERTa)         | Безкоштовний щомісячний кредит         |
+| Anthropic    | Відповіді аватара (Claude)      | Платно, потрібне поповнення балансу    |
+| ElevenLabs   | Синтез мовлення                 | Безкоштовний щомісячний ліміт символів |
+
+### 1. Clerk
+
+1. Зареєструйтеся на [dashboard.clerk.com](https://dashboard.clerk.com/sign-up).
+2. Створіть застосунок (**Create application**), серед способів входу залиште **Email**.
+3. У меню застосунку відкрийте **Configure → API Keys** і скопіюйте:
+   - **Publishable key** (`pk_test_…`) у `CLERK_PUBLISHABLE_KEY` (файл `backend/.env`) і `VITE_CLERK_PUBLISHABLE_KEY` (файл `frontend/.env`);
+   - **Secret key** (`sk_test_…`) у `CLERK_SECRET_KEY` (файл `backend/.env`).
+
+Документація: [Clerk Quickstart](https://clerk.com/docs/getting-started/quickstart/setup-clerk).
+
+### 2. Hugging Face
+
+1. Зареєструйтеся на [huggingface.co](https://huggingface.co/join).
+2. Відкрийте [створення токена](https://huggingface.co/settings/tokens/new?tokenType=fineGrained), вкажіть назву й увімкніть дозвіл **Make calls to Inference Providers**.
+3. Натисніть **Create token** і скопіюйте токен (`hf_…`) у `HF_TOKEN`.
+
+Документація: [User access tokens](https://huggingface.co/docs/hub/security-tokens).
+
+### 3. Anthropic
+
+1. Зареєструйтеся на [platform.claude.com](https://platform.claude.com/).
+2. Поповніть баланс у розділі [Billing](https://platform.claude.com/settings/billing). Мінімального поповнення вистачає на тисячі реплік.
+3. Створіть ключ у розділі [API Keys](https://platform.claude.com/settings/keys) і скопіюйте його (`sk-ant-…`) у `ANTHROPIC_API_KEY`.
+
+Документація: [Get started with Claude](https://platform.claude.com/docs/en/get-started).
+
+### 4. ElevenLabs
+
+1. Зареєструйтеся на [elevenlabs.io](https://elevenlabs.io/app/sign-up).
+2. Відкрийте [API Keys](https://elevenlabs.io/app/developers/api-keys), створіть ключ із доступом до **Text to Speech** і скопіюйте його в `ELEVENLABS_API_KEY`.
+3. `ELEVENLABS_VOICE_ID` можна лишити з `.env.example` або обрати інший голос у [Voice Library](https://elevenlabs.io/app/voice-library) і скопіювати його ID.
+
+Документація: [ElevenLabs Quickstart](https://elevenlabs.io/docs/eleven-api/quickstart).
+
+## Встановлення та запуск
+
+1. Встановіть [необхідне ПЗ](#системні-вимоги-та-необхідне-пз) і [отримайте API-ключі](#отримання-api-ключів). Запустіть Docker Desktop.
+2. Завантажте репозиторій і створіть файли налаштувань із шаблонів:
+
+   ```bash
+   git clone https://github.com/afterglow1251/master-dialogue-face
+   cd master-dialogue-face
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   ```
+
+   У Windows (PowerShell) замість `cp` використовуйте `copy`.
+
+3. Відкрийте `backend/.env` і впишіть ключі: `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `HF_TOKEN`, `ANTHROPIC_API_KEY`, `ELEVENLABS_API_KEY`. У `frontend/.env` впишіть `VITE_CLERK_PUBLISHABLE_KEY`. Решту значень залиште без змін.
+4. Запустіть систему:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Перший запуск триває кілька хвилин: Docker завантажує образи та збирає застосунок. База даних, таблиці та початкові дані створюються автоматично.
+
+5. Відкрийте в браузері [http://localhost](http://localhost).
+
+Корисні команди:
+
+| Дія                        | Команда                       |
+| -------------------------- | ----------------------------- |
+| Стан контейнерів           | `docker compose ps`           |
+| Журнал backend             | `docker compose logs backend` |
+| Зупинка                    | `docker compose down`         |
+| Зупинка з видаленням даних | `docker compose down -v`      |
+
+**Розгортання на сервері.** Перед першим запуском створіть у корені проєкту файл `.env` з рядком `DB_PASSWORD=<надійний пароль із латинських літер і цифр>`. У `frontend/.env` замініть `localhost` на адресу сервера. Голосове диктування на сервері працює лише через HTTPS (див. [Можливі проблеми](#можливі-проблеми)).
+
+## Змінні оточення
+
+`backend/.env`:
+
+| Змінна                    | Обов'язкова     | Опис                                                                      |
+| ------------------------- | --------------- | ------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`        | так             | Секретний ключ Clerk                                                      |
+| `CLERK_PUBLISHABLE_KEY`   | так             | Публічний ключ Clerk                                                      |
+| `HF_TOKEN`                | так             | Токен Hugging Face                                                        |
+| `ANTHROPIC_API_KEY`       | так             | Ключ Anthropic API                                                        |
+| `ELEVENLABS_API_KEY`      | так             | Ключ ElevenLabs                                                           |
+| `ELEVENLABS_VOICE_ID`     | так             | Голос аватара; у шаблоні вже є значення                                   |
+| `DATABASE_URL`            | лише без Docker | Рядок підключення до PostgreSQL; у Docker Compose задається автоматично   |
+| `EXPRESSION_MODE`         | ні              | Спосіб композиції міміки за замовчуванням: `facs` або `linear`            |
+| `LLM_*`, `MOOD_*`, `WS_*` | ні              | Параметри мовної моделі, моделі настрою та WebSocket; див. `.env.example` |
+
+`frontend/.env`:
+
+| Змінна                       | Опис                                                        |
+| ---------------------------- | ----------------------------------------------------------- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Публічний ключ Clerk (той самий, що в `backend/.env`)       |
+| `VITE_API_BASE_URL`          | Адреса backend, за замовчуванням `http://localhost:3000`    |
+| `VITE_WS_URL`                | Адреса WebSocket, за замовчуванням `ws://localhost:3000/ws` |
+
+Як отримати кожен ключ, описано в розділі [Отримання API-ключів](#отримання-api-ключів). Файли `.env` містять секрети й не потрапляють у репозиторій.
+
+## Інструкція користувача
+
+Екран поділено на дві частини: зліва 3D-аватар, справа чат.
+
+1. **Реєстрація та вхід.** Відкрийте застосунок, зареєструйтеся за email (**Sign up**) або увійдіть у наявний акаунт (**Sign in**).
+2. **Мова.** Відкрийте бічну панель (кнопка ліворуч угорі), у блоці **Акаунт** натисніть на аватар профілю → **Manage account** → **Налаштування**. Тут обирається мова інтерфейсу (українська або англійська) і кольорова схема. Від мови інтерфейсу залежать мова розпізнавання голосу та мова, якою відповідає аватар.
+3. **Новий чат.** На бічній панелі натисніть **Новий чат**. Попередні чати показано в розділі **Чати**.
+4. **Надсилання репліки.** Введіть текст у поле внизу чату й натисніть Enter або кнопку ↑ (Shift+Enter переносить рядок). Щоб говорити голосом, натисніть кнопку мікрофона **Диктувати голосом** і дозвольте браузеру доступ до мікрофона.
+5. **Відповідь аватара.** Аватар відповідає голосом, рухаючи губами синхронно з мовленням, а вираз його обличчя змінюється відповідно до емоцій. Кнопка ■ **Зупинити відповідь** перериває відповідь.
+6. **Емоції та настрій.**
+   - Панель під аватаром (на широкому екрані) показує поточні емоції та настрій.
+   - Під кожною реплікою вказано головну емоцію та напрям зміни настрою (↑ покращився, ↓ погіршився).
+   - Кнопка ⓘ **Переглянути звіт емоцій** відкриває звіт репліки: вкладка **Звіт** (виявлені емоції, стан настрою, вплив репліки) і вкладка **Динаміка** (графік настрою до цієї репліки).
+   - Кнопка з графіком біля назви чату відкриває **Динаміку розмови**: зміну настрою аватара впродовж усього діалогу.
+7. **Налаштування міміки.** Бічна панель → **Налаштування**:
+   - **Анімація:** згладжування та інтенсивність виразів;
+   - **Композиція міміки:** **FACS** (на основі м'язових одиниць дії) або **Лінійна** (суміш шаблонів емоцій); перемикається під час розмови;
+   - **Модель настрою:** реактивність (наскільки сильно нові емоції впливають на настрій), час затухання (за скільки настрій повертається до нейтрального), вага емоції (співвідношення поточної емоції та настрою);
+   - **Скинути** повертає значення за замовчуванням, **Скинути настрій** повертає аватара до нейтрального стану.
+8. **Керування чатами.** Наведіть курсор на чат у списку: олівець перейменовує чат, кошик видаляє. Назву поточного чату також можна змінити олівцем, який з'являється при наведенні на неї над повідомленнями. Уся історія зберігається, до будь-якого чату можна повернутися.
+9. **Вихід.** Бічна панель → аватар профілю в блоці **Акаунт** → **Sign out**.
+
+Форми входу та меню акаунта надає сервіс Clerk, тому вони англійською.
+
+## Можливі проблеми
+
+| Проблема                              | Причина та рішення                                                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Немає кнопки мікрофона                | Браузер не підтримує Web Speech API. Використовуйте Chrome або Edge.                                                                                   |
+| Диктування не працює на сервері       | Браузери дозволяють мікрофон лише на `localhost` або через HTTPS. Налаштуйте HTTPS для сервера.                                                        |
+| Backend не запускається               | Не заповнено обов'язкові змінні. Назви відсутніх змінних видно в `docker compose logs backend`.                                                        |
+| Порт 80 або 3000 зайнятий             | Звільніть порт або змініть його: для backend змінна `BACKEND_PORT` у файлі `.env` у корені проєкту, для frontend рядок `ports` у `docker-compose.yml`. |
+| Сторінка входу порожня або з помилкою | Перевірте `VITE_CLERK_PUBLISHABLE_KEY` у `frontend/.env` і перезберіть frontend: `docker compose up -d --build`.                                       |
+| Аватар не відповідає, у чаті помилка  | Закінчився баланс Anthropic, кредит Hugging Face або ліміт ElevenLabs. Перевірте баланс у відповідному сервісі та `docker compose logs backend`.       |
+
+## Локальна розробка
+
+Потрібні [Bun](https://bun.sh) 1.2+ і PostgreSQL 16. Найпростіше підняти базу через Docker: `docker compose -f docker-compose.dev.yml up -d postgres`.
 
 ```bash
 bun install
 cd backend && bun install && cd ..
 cd frontend && bun install && cd ..
-
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# Fill environment variables (see the .env.example files)
 ```
 
-### Run Services
-
-Each in its own terminal:
+У `backend/.env` вкажіть `DATABASE_URL=postgresql://facial_user:facial_pass@localhost:5432/facial_expressions`. Далі кожен сервіс у своєму терміналі:
 
 ```bash
-# 1. Backend
 cd backend && bun run db:migrate && bun run db:seed && bun run dev
+```
 
-# 2. Frontend
+```bash
 cd frontend && bun run dev
 ```
 
-| Service           | URL                           |
+| Сервіс            | Адреса                        |
 | ----------------- | ----------------------------- |
 | Frontend          | http://localhost:5173         |
 | Backend API       | http://localhost:3000         |
 | Backend WebSocket | ws://localhost:3000/ws        |
-| OpenAPI Docs      | http://localhost:3000/openapi |
+| Документація API  | http://localhost:3000/openapi |
 
-### Docker Development
+Або все в Docker з автоматичним перезавантаженням під час змін коду: `docker compose -f docker-compose.dev.yml up`.
 
-```bash
-docker compose -f docker-compose.dev.yml up
-```
-
-Mounts source directories for hot-reload.
-
-## Environment Variables
-
-Each app has its own env file: `backend/.env` (copy from `backend/.env.example`) and `frontend/.env` (copy from `frontend/.env.example`). Docker Compose reads the same files via `env_file`. Required:
-
-- `DATABASE_URL` — PostgreSQL connection string (only for running the backend outside Docker; Compose points it at its own `postgres` service)
-- `CLERK_SECRET_KEY` · `CLERK_PUBLISHABLE_KEY` — Clerk auth keys
-- `VITE_CLERK_PUBLISHABLE_KEY` — Clerk key for frontend
-- `HF_TOKEN` — Hugging Face token for the RoBERTa emotion model
-- `ANTHROPIC_API_KEY` — Claude API key for avatar replies
-- `ELEVENLABS_API_KEY` · `ELEVENLABS_VOICE_ID` — ElevenLabs text-to-speech
-
-## Testing
+## Тестування
 
 ```bash
-cd backend && bun test          # 89 unit tests
+cd backend && bun test
 ```
 
-Covers the reply line protocol, emotion score parsing, VAD conversion, probability normalization, blendshape mapping, mood model, and type safety.
+121 unit-тест перевіряє розбір відповіді мовної моделі, обробку оцінок емоцій, нормалізацію ймовірностей, функції активації, перетворення емоцій на міміку, модель настрою, конфігурацію та перевірку типів даних.
 
-## Resources
+## Ресурси
 
-- **API Reference**: OpenAPI spec at `/openapi` (auto-generated)
-- **Thesis**: See thesis document for algorithm details (ALMA mood model, EMA smoothing, blendshape mapping)
-- **License**: See LICENSE file
+- **Модель емоцій:** [MODEL.md](MODEL.md)
+- **Документація API:** OpenAPI-специфікація за адресою `/openapi` (генерується автоматично)
+- **Ліцензія:** [MIT](LICENSE)
