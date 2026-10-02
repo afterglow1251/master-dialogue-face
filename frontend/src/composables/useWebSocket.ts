@@ -16,6 +16,7 @@ import type {
 } from "@shared/types/websocket";
 import { isWsServerMessage } from "@/types/websocket";
 import { env } from "@/utils/env";
+import { randomId } from "@/utils/randomId";
 
 const MAX_TITLE_LENGTH = 50;
 
@@ -159,7 +160,7 @@ export function useAppWebSocket() {
     const dialogueId = dialogueStore.currentDialogueId;
     if (!dialogueId) return;
 
-    const requestId = crypto.randomUUID();
+    const requestId = randomId();
     conversationStore.startRequest(requestId, text);
     sendMessage({
       type: "chat",
