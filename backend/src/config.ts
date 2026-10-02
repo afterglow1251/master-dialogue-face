@@ -29,7 +29,20 @@ function validateEnv(): void {
   }
 }
 
+const DEFAULT_DB_PASSWORD = "facial_pass";
+
+function warnOnDefaultDbPassword(): void {
+  const url = new URL(Bun.env.DATABASE_URL);
+  if (url.password !== DEFAULT_DB_PASSWORD) {
+    return;
+  }
+  console.warn(
+    "Database uses the default password. Set DB_PASSWORD in the .env file in the project root before deploying to a server.",
+  );
+}
+
 validateEnv();
+warnOnDefaultDbPassword();
 
 export const config = {
   port: Number(Bun.env.PORT ?? "3000"),

@@ -179,7 +179,7 @@ Useful commands:
 | Stop                 | `docker compose down`         |
 | Stop and delete data | `docker compose down -v`      |
 
-**Server deployment.** Before the first start, create a `.env` file in the project root with `DB_PASSWORD=<strong password of Latin letters and digits>`. In `frontend/.env` replace `localhost` with the server address. On a server, voice dictation works only over HTTPS (see [Troubleshooting](#troubleshooting)).
+**Server deployment.** Before the first start, copy `.env.example` in the project root to `.env` and set `DB_PASSWORD` (a strong password of Latin letters and digits) and, if needed, the site port `FRONTEND_PORT`. Without `DB_PASSWORD` the database runs with the default password and the backend logs a warning about it. In `frontend/.env` replace `localhost` with the server address. On a server, voice dictation works only over HTTPS (see [Troubleshooting](#troubleshooting)).
 
 ## Environment Variables
 
@@ -231,14 +231,14 @@ The screen has two parts: the 3D avatar on the left, the chat on the right.
 
 ## Troubleshooting
 
-| Problem                              | Cause and fix                                                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| No microphone button                 | The browser does not support the Web Speech API. Use Chrome or Edge.                                                                                   |
-| Dictation does not work on a server  | Browsers allow the microphone only on `localhost` or over HTTPS. Set up HTTPS for the server.                                                          |
-| Backend does not start               | Required variables are missing. Their names are shown in `docker compose logs backend`.                                                                |
-| Port 80 or 3000 is busy              | Free the port or change it: for the backend, `BACKEND_PORT` in the `.env` file in the project root; for the frontend, `ports` in `docker-compose.yml`. |
-| Sign-in page is empty or shows error | Check `VITE_CLERK_PUBLISHABLE_KEY` in `frontend/.env` and rebuild the frontend: `docker compose up -d --build`.                                        |
-| Avatar does not reply, chat error    | The Anthropic balance, Hugging Face credit or ElevenLabs quota ran out. Check the balance in the service and `docker compose logs backend`.            |
+| Problem                              | Cause and fix                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| No microphone button                 | The browser does not support the Web Speech API. Use Chrome or Edge.                                                                        |
+| Dictation does not work on a server  | Browsers allow the microphone only on `localhost` or over HTTPS. Set up HTTPS for the server.                                               |
+| Backend does not start               | Required variables are missing. Their names are shown in `docker compose logs backend`.                                                     |
+| Port 80 or 3000 is busy              | Free the port or change it: `FRONTEND_PORT` and `BACKEND_PORT` in the `.env` file in the project root.                                      |
+| Sign-in page is empty or shows error | Check `VITE_CLERK_PUBLISHABLE_KEY` in `frontend/.env` and rebuild the frontend: `docker compose up -d --build`.                             |
+| Avatar does not reply, chat error    | The Anthropic balance, Hugging Face credit or ElevenLabs quota ran out. Check the balance in the service and `docker compose logs backend`. |
 
 ## Local Development
 
